@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Auth</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--background);
+            padding: 1rem;
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .auth-logo {
+            width: 4rem;
+            height: 4rem;
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border-radius: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .toggle-container {
+            display: flex;
+            background: var(--muted);
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 0.4rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background: transparent;
+            color: var(--muted-foreground);
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: var(--card);
+            color: var(--foreground);
+            box-shadow: var(--shadow-sm);
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.625rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--foreground);
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .auth-btn {
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15h10"/><path d="M9 9h6"/><path d="M7 21v-4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><path d="M13 3h1a2 2 0 0 1 2 2v10H8V5a2 2 0 0 1 2-2h3z"/></svg>
+                </div>
+                <h1 class="text-2xl font-bold">Metro Mate</h1>
+                <p id="auth-subtitle" class="text-muted-foreground mt-1">Welcome back, sign in to continue</p>
+            </div>
+
+            <div class="toggle-container">
+                <button id="login-toggle" class="toggle-btn active">Login</button>
+                <button id="signup-toggle" class="toggle-btn">Sign Up</button>
+            </div>
+
+            <form id="auth-form" class="space-y-4">
+                <div id="message-container"></div>
+                
+                <div id="name-group" class="form-group hidden">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="full-name" class="form-input" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="name@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                </div>
+                <div id="role-group" class="form-group hidden">
+                    <label class="form-label">User Type</label>
+                    <select id="user-type" class="form-input">
+                        <option value="">Select a user type</option>
+                        <option value="User">User</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" id="submit-btn" class="btn btn-accent auth-btn">Login</button>
+                
+                <div id="forgot-password-link" class="text-center mt-3">
+                    <a href="/forgot-password" class="text-primary text-sm">Forgot Password?</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const loginToggle = document.getElementById('login-toggle');
+        const signupToggle = document.getElementById('signup-toggle');
+        const nameGroup = document.getElementById('name-group');
+        const roleGroup = document.getElementById('role-group');
+        const submitBtn = document.getElementById('submit-btn');
+        const authSubtitle = document.getElementById('auth-subtitle');
+        const authForm = document.getElementById('auth-form');
+        const messageContainer = document.getElementById('message-container');
+        const forgotPasswordLink = document.getElementById('forgot-password-link');
+
+        const fullNameInput = document.getElementById('full-name');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const userTypeSelect = document.getElementById('user-type');
+
+        const existingAuthToken = localStorage.getItem('auth_token');
+        const existingUserType = existingAuthToken ? (localStorage.getItem('user_type') || '').trim().toLowerCase() : '';
+        let isLoginMode = true;
+
+        restoreExistingSession();
+
+        function clearStoredSession() {
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('user_email');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_type');
+            localStorage.removeItem('auth_token');
+        }
+
+        async function restoreExistingSession() {
+            if (!existingAuthToken || !existingUserType) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/session/restore', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${existingAuthToken}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    clearStoredSession();
+                    return;
+                }
+
+                const data = await response.json();
+                const userData = data.user || {};
+                localStorage.setItem('user_id', userData.id || '');
+                localStorage.setItem('user_email', userData.email || '');
+                localStorage.setItem('user_name', userData.full_name || '');
+                localStorage.setItem('user_type', userData.user_type || existingUserType);
+
+                const redirectPath = (userData.user_type || existingUserType).trim().toLowerCase() === 'admin'
+                    ? '/admin'
+                    : '/home';
+                window.location.replace(redirectPath);
+            } catch (error) {
+                clearStoredSession();
+            }
+        }
+
+        function showMessage(message, isError = false) {
+            messageContainer.innerHTML = `
+                <div class="${isError ? 'error-message' : 'success-message'}" style="background: ${isError ? '#ef4444' : '#10b981'}; color: white; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                    ${message}
+                </div>
+            `;
+        }
+
+        loginToggle.addEventListener('click', () => {
+            isLoginMode = true;
+            loginToggle.classList.add('active');
+            signupToggle.classList.remove('active');
+            nameGroup.classList.add('hidden');
+            roleGroup.classList.add('hidden');
+            forgotPasswordLink.classList.remove('hidden');
+            submitBtn.textContent = 'Login';
+            authSubtitle.textContent = 'Welcome back, sign in to continue';
+            messageContainer.innerHTML = '';
+        });
+
+        signupToggle.addEventListener('click', () => {
+            isLoginMode = false;
+            signupToggle.classList.add('active');
+            loginToggle.classList.remove('active');
+            nameGroup.classList.remove('hidden');
+            roleGroup.classList.remove('hidden');
+            forgotPasswordLink.classList.add('hidden');
+            submitBtn.textContent = 'Sign Up';
+            authSubtitle.textContent = 'Create your account to get started';
+            messageContainer.innerHTML = '';
+        });
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fullName = fullNameInput.value;
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const userType = userTypeSelect.value;
+
+            if (isLoginMode) {
+                // Login API call
+                try {
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email: email, password: password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Store user session data
+                        const userData = data.user;
+                        localStorage.setItem('user_id', userData.id);
+                        localStorage.setItem('user_email', userData.email);
+                        localStorage.setItem('user_name', userData.full_name);
+                        localStorage.setItem('user_type', userData.user_type);
+                        localStorage.setItem('auth_token', data.session_token || '');
+                        const redirectPath = (userData.user_type || '').trim().toLowerCase() === 'admin'
+                            ? '/admin'
+                            : '/home';
+                        
+                        showMessage('Login successful! Redirecting...');
+                        setTimeout(() => {
+                            window.location.href = redirectPath;
+                        }, 1500);
+                    } else {
+                        showMessage(data.detail || 'Login failed', true);
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', true);
+                }
+            } else {
+                // Signup API call
+                if (!fullName || !userType) {
+                    showMessage('Please fill in all fields', true);
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/signup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            full_name: fullName,
+                            email: email, 
+                            password: password,
+                            user_type: userType
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showMessage('Signup successful! Redirecting to login...');
+                        setTimeout(() => {
+                            loginToggle.click();
+                        }, 1500);
+                    } else {
+                        showMessage(data.detail || 'Signup failed', true);
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', true);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

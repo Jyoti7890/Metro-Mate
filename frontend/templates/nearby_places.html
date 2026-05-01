@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Nearby Places</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .filter-select {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+            min-width: 200px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .places-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .place-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .place-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .place-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: #f0f0f0;
+        }
+        
+        .place-content {
+            padding: 1.5rem;
+        }
+        
+        .place-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        
+        .place-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+        
+        .place-rating {
+            background: #ffd700;
+            color: #333;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .place-distance {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .place-category {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        
+        .place-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .view-details-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+        }
+        
+        .view-details-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .view-details-btn:active {
+            transform: translateY(0);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 3rem;
+            color: #d32f2f;
+            background: #ffebee;
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-body {
+            padding: 2rem;
+        }
+        
+        .detail-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .detail-info {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .detail-value {
+            color: #333;
+            text-align: right;
+        }
+        
+        .detail-description {
+            grid-column: 1 / -1;
+            padding: 1rem 0;
+            line-height: 1.6;
+            color: #666;
+        }
+        
+        .rating-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .star {
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .places-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-select {
+                min-width: auto;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Nearby Places</h1>
+            <p>Discover amazing places near metro stations</p>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <div id="places-container">
+            <div class="loading">
+                <p>Loading nearby places...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for place details -->
+    <div id="place-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-place-name">Place Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content will be dynamically loaded -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allPlaces = [];
+        let currentStation = '';
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStations();
+            loadNearbyPlaces();
+        });
+
+        // Load stations for dropdown (keeping for potential future use)
+        async function loadStations() {
+            try {
+                const response = await fetch('/api/stations');
+                if (response.ok) {
+                    const stations = await response.json();
+                    console.log(`Loaded ${stations.length} stations`);
+                }
+            } catch (error) {
+                console.error('Error loading stations:', error);
+            }
+        }
+
+        // Load nearby places (always get all places)
+        async function loadNearbyPlaces() {
+            try {
+                const url = '/api/nearby-places'; // Always get all places
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    allPlaces = await response.json();
+                    displayPlaces(allPlaces);
+                } else if (response.status === 404) {
+                    showNoPlacesMessage();
+                } else {
+                    showError('Failed to load nearby places');
+                }
+            } catch (error) {
+                console.error('Error loading nearby places:', error);
+                showError('Failed to load nearby places');
+            }
+        }
+
+        // Display places as cards
+        function displayPlaces(places) {
+            const container = document.getElementById('places-container');
+            
+            if (places.length === 0) {
+                showNoPlacesMessage();
+                return;
+            }
+
+            const placesHTML = places.map(place => {
+                // Use image_url exactly as stored - it's already a complete Supabase URL
+                const imageUrl = place.image_url || 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400';
+                const rating = place.rating ? place.rating.toFixed(1) : 'N/A';
+                
+                return `
+                    <div class="place-card">
+                        <img src="${imageUrl}" alt="${place.name}" class="place-image" 
+                             onerror="this.src='https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400'">
+                        <div class="place-content">
+                            <div class="place-header">
+                                <h3 class="place-name">${place.name}</h3>
+                                <div class="place-rating">
+                                    <span>⭐</span>
+                                    <span>${rating}</span>
+                                </div>
+                            </div>
+                            <div class="place-distance">📍 ${place.distance_km} km from ${place.station_name}</div>
+                            <div class="place-category">${place.category}</div>
+                            <p class="place-description">${place.description || 'No description available'}</p>
+                            <button class="view-details-btn" onclick="viewDetails('${place.id}')">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="places-container">${placesHTML}</div>`;
+        }
+
+        // Show no places message
+        function showNoPlacesMessage() {
+            const container = document.getElementById('places-container');
+            container.innerHTML = `
+                <div class="error">
+                    <h3>No nearby places found</h3>
+                    <p>There are no nearby places for the selected station.</p>
+                </div>
+            `;
+        }
+
+        // Show error message
+        function showError(message) {
+            const container = document.getElementById('places-container');
+            container.innerHTML = `
+                <div class="error">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // View place details
+        async function viewDetails(placeId) {
+            console.log('View details called for place ID:', placeId);
+            console.log('Current page URL:', window.location.href);
+            console.log('Base URL:', window.location.origin);
+            
+            try {
+                const url = `${window.location.origin}/api/nearby-places/${placeId}`;
+                console.log('Fetching from:', url);
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (response.ok) {
+                    const place = await response.json();
+                    console.log('Place data:', place);
+                    showPlaceModal(place);
+                } else {
+                    console.error('Response not OK:', response.status, response.statusText);
+                    console.error('Response text:', await response.text());
+                    showError('Failed to load place details');
+                }
+            } catch (error) {
+                console.error('Error loading place details:', error);
+                showError('Failed to load place details');
+            }
+        }
+
+        // Show place details in modal
+        function showPlaceModal(place) {
+            console.log('Showing modal for place:', place);
+            const modal = document.getElementById('place-modal');
+            const modalTitle = document.getElementById('modal-place-name');
+            const modalBody = document.getElementById('modal-body');
+            
+            if (!modal || !modalTitle || !modalBody) {
+                console.error('Modal elements not found');
+                showError('Modal elements not found');
+                return;
+            }
+            
+            modalTitle.textContent = place.name;
+            
+            // Use image_url exactly as stored - it's already a complete Supabase URL
+            const imageUrl = place.image_url || 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400';
+            const rating = place.rating ? place.rating.toFixed(1) : 'N/A';
+            
+            modalBody.innerHTML = `
+                <img src="${imageUrl}" alt="${place.name}" class="detail-image"
+                     onerror="this.src='https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400'">
+                
+                <div class="detail-info">
+                    <div class="detail-row">
+                        <span class="detail-label">Station:</span>
+                        <span class="detail-value">${place.station_name}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Distance:</span>
+                        <span class="detail-value">${place.distance_km} km</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Category:</span>
+                        <span class="detail-value">${place.category}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Rating:</span>
+                        <span class="detail-value rating-display">
+                            <span class="star">⭐</span>
+                            <span>${rating}</span>
+                        </span>
+                    </div>
+                    <div class="detail-description">
+                        <strong>Description:</strong><br>
+                        ${place.description || 'No description available'}
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            console.log('Modal should now be visible');
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('place-modal');
+            modal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('place-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+</body>
+</html>

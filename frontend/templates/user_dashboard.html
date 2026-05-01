@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .page-header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .stat-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        .stat-value { font-size: 1.75rem; font-weight: 700; }
+        .stat-label { font-size: 0.875rem; color: var(--muted-foreground); }
+        
+        .insight-card {
+            border-left: 4px solid var(--accent);
+        }
+        .confidence-bar {
+            height: 0.5rem;
+            background: var(--muted);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        .confidence-fill {
+            height: 100%;
+            background: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="page-header">
+        <div class="container">
+            <h1>User Dashboard</h1>
+            <p>Welcome back! View your travel history, active tickets, and AI-powered insights.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="card stat-card">
+                <div class="stat-icon bg-accent"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+                <div>
+                    <div class="stat-value">₹450</div>
+                    <div class="stat-label">Card Balance</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon bg-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></div>
+                <div>
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Active Tickets</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon bg-success"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15h10"/><path d="M9 9h6"/><path d="M7 21v-4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><path d="M13 3h1a2 2 0 0 1 2 2v10H8V5a2 2 0 0 1 2-2h3z"/></svg></div>
+                <div>
+                    <div class="stat-value">156</div>
+                    <div class="stat-label">Total Trips</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon bg-warning"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/><path d="m11 8 3 3-3 3"/><path d="M8 11h6"/></svg></div>
+                <div>
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Active Complaints</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Active Tickets -->
+            <div class="lg:col-span-2">
+                <h3 class="text-xl font-bold mb-6">Active Tickets</h3>
+                <div class="space-y-4">
+                    <div class="card flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-accent/10 rounded-lg text-accent"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15h10"/><path d="M9 9h6"/><path d="M7 21v-4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><path d="M13 3h1a2 2 0 0 1 2 2v10H8V5a2 2 0 0 1 2-2h3z"/></svg></div>
+                            <div>
+                                <div class="font-bold">Central Station → Airport Terminal</div>
+                                <div class="text-xs text-muted-foreground">TKT-2024-001 • Valid for 2h</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline btn-sm">View QR</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ML Insights -->
+            <div>
+                <h3 class="text-xl font-bold mb-6">AI Insights</h3>
+                <div class="space-y-4">
+                    <div class="card insight-card">
+                        <h4 class="font-bold text-accent mb-2">Peak Crowd Alert</h4>
+                        <p class="text-sm text-muted-foreground">Central Station will be crowded around 8:30 AM tomorrow.</p>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 92%;"></div>
+                        </div>
+                        <div class="text-xs text-right mt-1 font-semibold">92% Confidence</div>
+                    </div>
+                    <div class="card insight-card" style="border-left-color: var(--info);">
+                        <h4 class="font-bold text-info mb-2">Smart Saving</h4>
+                        <p class="text-sm text-muted-foreground">Recharge ₹1000 today to get 5% cashback on all trips.</p>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 85%; background: var(--info);"></div>
+                        </div>
+                        <div class="text-xs text-right mt-1 font-semibold">85% Confidence</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+</body>
+</html>

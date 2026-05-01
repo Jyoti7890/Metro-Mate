@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .admin-hero {
+            background: linear-gradient(135deg, #172554 0%, #1e3a8a 52%, #0f766e 100%);
+            color: #f8fafc;
+            padding: 3.5rem 0 2.75rem;
+            margin-bottom: 2rem;
+        }
+        .admin-hero-shell,
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .admin-layout,
+        .overview-grid,
+        .chart-grid,
+        .split-grid,
+        .insight-grid {
+            display: grid;
+            gap: 1rem;
+        }
+        .admin-layout {
+            margin-bottom: 3rem;
+        }
+        .overview-grid {
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        }
+        .chart-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        .split-grid {
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        }
+        .insight-grid {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+        .panel-card,
+        .metric-card,
+        .insight-card {
+            background: var(--card);
+            color: var(--card-foreground);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-card);
+        }
+        .panel-card {
+            padding: 1.25rem;
+        }
+        .metric-card,
+        .insight-card {
+            padding: 1rem;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 0.35rem;
+        }
+        .muted-copy {
+            color: var(--muted-foreground);
+            font-size: 0.9rem;
+        }
+        .error-panel {
+            border: 1px dashed var(--border);
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            color: var(--muted-foreground);
+        }
+        .hidden {
+            display: none;
+        }
+        .chart-card canvas {
+            width: 100%;
+            height: 280px !important;
+        }
+        .table-shell {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 0.9rem;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th,
+        td {
+            padding: 0.85rem 0.95rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.92rem;
+            vertical-align: top;
+        }
+        th {
+            color: var(--muted-foreground);
+            background: var(--secondary);
+            font-weight: 600;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.28rem 0.7rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--secondary);
+        }
+        .status-active,
+        .status-resolved,
+        .status-credit {
+            color: var(--success);
+            border-color: var(--success);
+        }
+        .status-pending,
+        .status-matched {
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+        .status-blocked,
+        .status-debit {
+            color: var(--destructive);
+            border-color: var(--destructive);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.8rem;
+        }
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        .control-stack {
+            display: grid;
+            gap: 0.8rem;
+        }
+        .empty-state {
+            border: 1px dashed var(--border);
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            color: var(--muted-foreground);
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="admin-hero">
+        <div class="container admin-hero-shell">
+            <div>
+                <div class="text-sm opacity-70">Administrator Workspace</div>
+                <h1 class="text-3xl font-bold">Metro Operations Dashboard</h1>
+                <p class="opacity-90">Global system data, user control, station administration, and lost-and-found operations live here.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="panel-card" style="padding: 0.8rem 1rem; min-width: 180px;">
+                    <div class="muted-copy">Last refreshed</div>
+                    <div id="admin-last-updated" class="font-semibold">Loading...</div>
+                </div>
+                <button id="refresh-admin-dashboard" class="btn btn-accent">Refresh</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container admin-layout">
+        <div id="admin-error" class="error-panel hidden"></div>
+
+        <section class="panel-card">
+            <div class="section-head">
+                <div>
+                    <h2 class="text-2xl font-bold">System Overview</h2>
+                    <p class="muted-copy">Total users, bookings, revenue, complaints, and stations.</p>
+                </div>
+            </div>
+            <div id="overview-grid" class="overview-grid"></div>
+        </section>
+
+        <section class="panel-card" style="margin-top: 1rem;">
+            <div class="section-head">
+                <div>
+                    <h2 class="text-2xl font-bold">Global Analytics</h2>
+                    <p class="muted-copy">Operational trend charts powered by Chart.js.</p>
+                </div>
+            </div>
+            <div class="chart-grid">
+                <div class="metric-card chart-card">
+                    <h3 class="font-bold">Daily Bookings</h3>
+                    <p class="muted-copy">Fourteen-day movement trend</p>
+                    <canvas id="daily-bookings-chart"></canvas>
+                </div>
+                <div class="metric-card chart-card">
+                    <h3 class="font-bold">Monthly Revenue</h3>
+                    <p class="muted-copy">Revenue analysis by month</p>
+                    <canvas id="revenue-chart"></canvas>
+                </div>
+                <div class="metric-card chart-card">
+                    <h3 class="font-bold">Crowded Stations</h3>
+                    <p class="muted-copy">Booking-weighted station usage</p>
+                    <canvas id="crowded-stations-chart"></canvas>
+                </div>
+                <div class="metric-card chart-card">
+                    <h3 class="font-bold">Peak Hours</h3>
+                    <p class="muted-copy">Daily system demand by hour</p>
+                    <canvas id="peak-hours-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="split-grid" style="margin-top: 1rem;">
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-xl font-bold">User Management</h2>
+                        <p class="muted-copy">Review passenger/admin accounts and block or activate as needed.</p>
+                    </div>
+                </div>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Bookings</th>
+                                <th>Spend</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body"></tbody>
+                    </table>
+                </div>
+                <div id="selected-user-panel" class="empty-state" style="margin-top: 1rem;">
+                    Select a user to view account details, recent bookings, and complaint activity.
+                </div>
+            </article>
+
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-xl font-bold">Station Management</h2>
+                        <p class="muted-copy">Add, update, delete, and reorder station metadata.</p>
+                    </div>
+                </div>
+                <form id="station-form">
+                    <input type="hidden" id="station-id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="station-name">Station Name</label>
+                            <input class="form-input" id="station-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="station-line">Line</label>
+                            <input class="form-input" id="station-line" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="station-sequence">Sequence</label>
+                            <input class="form-input" id="station-sequence" type="number" min="0" value="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="station-type">Type</label>
+                            <input class="form-input" id="station-type" value="residential">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="station-color">Line Color</label>
+                            <input class="form-input" id="station-color" value="#0f1a27">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="station-interchange">
+                            <span>Interchange</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="station-elevated">
+                            <span>Elevated</span>
+                        </label>
+                        <button type="submit" class="btn btn-primary">Save Station</button>
+                        <button type="button" id="station-reset" class="btn btn-outline">Reset</button>
+                    </div>
+                </form>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Line</th>
+                                <th>Sequence</th>
+                                <th>Type</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stations-table-body"></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <section class="split-grid" style="margin-top: 1rem;">
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-xl font-bold">Lost & Found Management</h2>
+                        <p class="muted-copy">Update complaint status and match lost items to found items.</p>
+                    </div>
+                </div>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Complaint ID</th>
+                                <th>User Name</th>
+                                <th>Item Name</th>
+                                <th>Status</th>
+                                <th>Update</th>
+                                <th>Match</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complaints-table-body"></tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-xl font-bold">Advanced Insights</h2>
+                        <p class="muted-copy">High-risk stations and crowd prediction summary for operations.</p>
+                    </div>
+                </div>
+                <div class="insight-grid">
+                    <div class="insight-card">
+                        <h3 class="font-bold">High-Risk Stations</h3>
+                        <div id="high-risk-list" class="control-stack" style="margin-top: 0.8rem;"></div>
+                    </div>
+                    <div class="insight-card">
+                        <h3 class="font-bold">Crowd Prediction Summary</h3>
+                        <div id="crowd-summary-list" class="control-stack" style="margin-top: 0.8rem;"></div>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/admin_dashboard.js') }}"></script>
+</body>
+</html>

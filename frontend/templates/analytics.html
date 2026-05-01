@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .page-header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+        .chart-placeholder {
+            height: 400px;
+            background: var(--muted);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted-foreground);
+            border: 2px dashed var(--border);
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Analytics & Reports</h1>
+            <p>Detailed performance metrics, user growth, and operational insights.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div class="card">
+                <h3 class="text-xl font-bold mb-6">User Growth Trends</h3>
+                <div class="chart-placeholder">
+                    <span>User Growth Graph</span>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="text-xl font-bold mb-6">Ticket Sales vs Recharge</h3>
+                <div class="chart-placeholder">
+                    <span>Revenue Comparison Graph</span>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="text-xl font-bold mb-6">Station Peak Hours</h3>
+                <div class="chart-placeholder">
+                    <span>Station Load Analysis</span>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="text-xl font-bold mb-6">Complaint Resolution Efficiency</h3>
+                <div class="chart-placeholder">
+                    <span>Resolution Rate Analysis</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+</body>
+</html>

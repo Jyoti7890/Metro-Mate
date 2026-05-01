@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero relative overflow-hidden bg-primary text-primary-foreground">
+            <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+            
+            <!-- Animated Metro Train -->
+            <div class="metro-train-container">
+                <div class="track"></div>
+                <div class="train-wrapper">
+                    <div class="train">
+                        <div class="train-locomotive">
+                            <div class="pantograph"></div>
+                            <div class="wheels">
+                                <div class="wheel"></div>
+                                <div class="wheel"></div>
+                            </div>
+                        </div>
+                        <div class="train-car">
+                            <div class="wheels">
+                                <div class="wheel"></div>
+                                <div class="wheel"></div>
+                            </div>
+                        </div>
+                        <div class="train-car">
+                            <div class="wheels">
+                                <div class="wheel"></div>
+                                <div class="wheel"></div>
+                            </div>
+                        </div>
+                        <div class="train-car">
+                            <div class="wheels">
+                                <div class="wheel"></div>
+                                <div class="wheel"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="container py-20 relative z-10">
+                <div class="max-w-3xl">
+                    <h1 class="text-3xl md:text-5xl font-bold mb-4">Your Trusted Companion for <span class="text-accent">Metro Travel</span></h1>
+                    <p class="text-xl mb-8 opacity-90">Plan smoother journeys with intelligent station search, seamless ticket booking, and real-time smart card management.</p>
+                    <div class="flex gap-4">
+                        <a href="/book-ticket" class="btn btn-accent">Book Ticket</a>
+                        <a href="/stations" class="btn btn-outline">Explore Stations</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-20">
+            <div class="container">
+                <h2 class="text-3xl font-bold mb-12 text-center">Smart Services</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Book Tickets -->
+                    <div class="card feature-card">
+                        <div class="icon-box accent"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15h10"/><path d="M9 9h6"/><path d="M7 21v-4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><path d="M13 3h1a2 2 0 0 1 2 2v10H8V5a2 2 0 0 1 2-2h3z"/></svg></div>
+                        <h3 class="text-xl font-bold mb-2">Book Tickets</h3>
+                        <p class="text-muted-foreground mb-4">Quick and easy ticket booking with dynamic fare calculation and digital QR tickets.</p>
+                        <a href="/book-ticket" class="btn btn-primary btn-sm">Get Started</a>
+                    </div>
+
+                    <!-- Station Search -->
+                    <div class="card feature-card">
+                        <div class="icon-box primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                        <h3 class="text-xl font-bold mb-2">Station Search</h3>
+                        <p class="text-muted-foreground mb-4">Find stations, view facilities, and explore metro lines with interactive maps.</p>
+                        <a href="/stations" class="btn btn-primary btn-sm">Find Stations</a>
+                    </div>
+
+                    <!-- Nearby Places -->
+                    <div class="card feature-card">
+                        <div class="icon-box success"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+                        <h3 class="text-xl font-bold mb-2">Nearby Places</h3>
+                        <p class="text-muted-foreground mb-4">Discover tourist attractions and popular places near metro stations.</p>
+                        <a href="/nearby-places" class="btn btn-primary btn-sm">Explore</a>
+                    </div>
+
+                    <!-- Lost & Found -->
+                    <div class="card feature-card">
+                        <div class="icon-box warning"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
+                        <h3 class="text-xl font-bold mb-2">Lost & Found</h3>
+                        <p class="text-muted-foreground mb-4">Report lost items or found belongings with AI-powered matching system.</p>
+                        <a href="/lost-found" class="btn btn-primary btn-sm">Report Now</a>
+                    </div>
+
+                    <!-- Smart Card -->
+                    <div class="card feature-card">
+                        <div class="icon-box info"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+                        <h3 class="text-xl font-bold mb-2">Smart Card</h3>
+                        <p class="text-muted-foreground mb-4">Manage your metro smart card, recharge online, and track usage history.</p>
+                        <a href="/smart-card" class="btn btn-primary btn-sm">Manage Card</a>
+                    </div>
+
+                    <!-- My Dashboard -->
+                    <div class="card feature-card">
+                        <div class="icon-box accent"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+                        <h3 class="text-xl font-bold mb-2">My Dashboard</h3>
+                        <p class="text-muted-foreground mb-4">View your travel history, active tickets, and personalized ML insights.</p>
+                        <a href="/dashboard" class="btn btn-primary btn-sm">View Stats</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+</body>
+</html>
+
+<style>
+.bg-primary { background-color: var(--primary); }
+.text-primary-foreground { color: var(--primary-foreground); }
+
+.hero h1 {
+    font-size: 3rem;
+    line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+    .hero h1 { font-size: 4rem; }
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--primary-foreground);
+}
+
+.btn-outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.icon-box {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    color: white;
+}
+
+.icon-box.accent { background-color: var(--accent); }
+.icon-box.primary { background-color: var(--primary); }
+.icon-box.success { background-color: var(--success); }
+.icon-box.warning { background-color: var(--warning); }
+.icon-box.info { background-color: var(--info); }
+
+.text-muted-foreground { color: var(--muted-foreground); }
+
+.feature-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Animated Metro Train Styles */
+.metro-train-container {
+    position: absolute;
+    top: 60%;
+    left: 0;
+    right: 0;
+    height: 120px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.track {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.3) 100%);
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.track::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.8) 0px,
+        rgba(255, 255, 255, 0.8) 20px,
+        transparent 20px,
+        transparent 40px
+    );
+    animation: trackMarkers 3s linear infinite;
+}
+
+@keyframes trackMarkers {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(40px);
+    }
+}
+
+.train-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    animation: trainMove 10s linear infinite;
+}
+
+@keyframes trainMove {
+    0% {
+        left: -200px;
+        transform: translateY(-50%) scaleX(1);
+    }
+    49% {
+        transform: translateY(-50%) scaleX(1);
+    }
+    50% {
+        left: calc(100% + 200px);
+        transform: translateY(-50%) scaleX(-1);
+    }
+    99% {
+        transform: translateY(-50%) scaleX(-1);
+    }
+    100% {
+        left: -200px;
+        transform: translateY(-50%) scaleX(1);
+    }
+}
+
+.train {
+    display: flex;
+    align-items: center;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.train-car {
+    width: 60px;
+    height: 45px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(30, 64, 175, 0.9) 100%);
+    border-radius: 6px;
+    position: relative;
+    margin: 0 -2px;
+    border: 2px solid rgba(30, 58, 138, 0.8);
+}
+
+.train-car:first-child {
+    margin-left: 0;
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+}
+
+.train-car:last-child {
+    margin-right: 0;
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+.train-car::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    height: 15px;
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.9) 0%, rgba(59, 130, 246, 0.9) 100%);
+    border-radius: 3px;
+    border: 1px solid rgba(30, 64, 175, 0.8);
+}
+
+.train-car::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 12px;
+    right: 12px;
+    height: 4px;
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.9) 0px,
+        rgba(255, 255, 255, 0.9) 6px,
+        transparent 6px,
+        transparent 12px
+    );
+    border-radius: 2px;
+}
+
+.train-locomotive {
+    width: 75px;
+    height: 55px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%);
+    border-radius: 10px;
+    position: relative;
+    margin-right: -2px;
+    border: 2px solid rgba(153, 27, 27, 0.8);
+}
+
+.train-locomotive::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    height: 18px;
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.9) 0%, rgba(239, 68, 68, 0.9) 100%);
+    border-radius: 5px;
+    border: 1px solid rgba(220, 38, 38, 0.8);
+}
+
+.train-locomotive::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 15px;
+    right: 15px;
+    height: 6px;
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.9) 0px,
+        rgba(255, 255, 255, 0.9) 8px,
+        transparent 8px,
+        transparent 16px
+    );
+    border-radius: 2px;
+}
+
+.pantograph {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 2px;
+}
+
+.pantograph::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 15px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 2px;
+}
+
+.wheels {
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-evenly;
+    padding: 0 8px;
+}
+
+.wheel {
+    width: 10px;
+    height: 10px;
+    background: rgba(31, 41, 55, 0.9);
+    border-radius: 50%;
+    border: 2px solid rgba(55, 65, 81, 0.9);
+    animation: wheelRotate 0.6s linear infinite;
+}
+
+@keyframes wheelRotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .metro-train-container {
+        height: 80px;
+        top: 65%;
+    }
+    
+    .train-car {
+        width: 45px;
+        height: 35px;
+    }
+    
+    .train-locomotive {
+        width: 55px;
+        height: 42px;
+    }
+    
+    .wheel {
+        width: 8px;
+        height: 8px;
+    }
+}
+</style>

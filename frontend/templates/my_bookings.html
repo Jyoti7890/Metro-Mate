@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - My Bookings</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .page-header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .booking-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .booking-card:hover {
+            box-shadow: var(--shadow);
+        }
+        
+        .booking-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .booking-route {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        
+        .booking-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-cancelled {
+            background-color: #fef2f2;
+            color: #991b1b;
+        }
+        
+        .booking-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detail-label {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-value {
+            font-weight: 500;
+            color: var(--foreground);
+        }
+        
+        .cancel-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .cancel-btn:hover:not(:disabled) {
+            background-color: #dc2626;
+        }
+        
+        .cancel-btn:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted-foreground);
+        }
+        
+        .no-bookings {
+            text-align: center;
+            padding: 3rem;
+            color: var(--muted-foreground);
+        }
+        
+        .refund-message {
+            background-color: #f0f9ff;
+            color: #0369a1;
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="page-header">
+        <div class="container">
+            <h1>My Bookings</h1>
+            <p>View and manage your metro ticket bookings</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="bookings-container">
+            <div class="loading">
+                <p>Loading your bookings...</p>
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script>
+        // Get current user from localStorage
+        const currentUserEmail = localStorage.getItem('user_email');
+
+        // Check if user is logged in
+        if (!currentUserEmail) {
+            alert('Please login first to view your bookings.');
+            window.location.href = '/';
+        }
+
+        // Load user bookings
+        async function loadBookings() {
+            try {
+                const response = await fetch(`/user-bookings/${currentUserEmail}`);
+                
+                if (response.ok) {
+                    const bookings = await response.json();
+                    displayBookings(bookings);
+                } else {
+                    throw new Error('Failed to load bookings');
+                }
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                document.getElementById('bookings-container').innerHTML = `
+                    <div class="no-bookings">
+                        <p>Failed to load bookings. Please refresh the page.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display bookings
+        function displayBookings(bookings) {
+            const container = document.getElementById('bookings-container');
+            
+            if (bookings.length === 0) {
+                container.innerHTML = `
+                    <div class="no-bookings">
+                        <h3>No bookings found</h3>
+                        <p>You haven't made any bookings yet. Book your first metro ticket!</p>
+                        <a href="/book-ticket" class="btn btn-primary">Book Ticket</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bookings.map(booking => {
+                const date = new Date(booking.booking_date);
+                const dateStr = date.toLocaleDateString('en-IN', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                });
+                const timeStr = date.toLocaleTimeString('en-IN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+
+                const statusClass = booking.status === 'active' ? 'status-active' : 'status-cancelled';
+                const isCancelled = booking.status === 'cancelled';
+                
+                return `
+                    <div class="booking-card" id="booking-${booking.booking_id}">
+                        <div class="booking-header">
+                            <div class="booking-route">
+                                ${booking.from_station} → ${booking.to_station}
+                            </div>
+                            <div class="booking-status ${statusClass}">
+                                ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                            </div>
+                        </div>
+                        
+                        <div class="booking-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Fare</span>
+                                <span class="detail-value">Rs.${booking.total_fare}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Tickets</span>
+                                <span class="detail-value">${booking.ticket_count}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Payment</span>
+                                <span class="detail-value">${booking.payment_method}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Date</span>
+                                <span class="detail-value">${dateStr}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Time</span>
+                                <span class="detail-value">${timeStr}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="booking-actions">
+                            <button 
+                                class="cancel-btn" 
+                                onclick="cancelBooking('${booking.booking_id}')"
+                                ${isCancelled ? 'disabled' : ''}
+                            >
+                                ${isCancelled ? 'Already Cancelled' : 'Cancel Booking'}
+                            </button>
+                        </div>
+                        
+                        <div id="refund-message-${booking.booking_id}"></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Cancel booking
+        async function cancelBooking(bookingId) {
+            if (!confirm('Are you sure you want to cancel this booking?')) {
+                return;
+            }
+
+            const button = document.querySelector(`#booking-${bookingId} .cancel-btn`);
+            const originalText = button.textContent;
+            
+            button.textContent = 'Cancelling...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch(`/cancel-booking/${bookingId}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Update UI
+                    const statusElement = document.querySelector(`#booking-${bookingId} .booking-status`);
+                    statusElement.textContent = 'Cancelled';
+                    statusElement.className = 'booking-status status-cancelled';
+                    
+                    button.textContent = 'Already Cancelled';
+                    
+                    // Show refund message if applicable
+                    if (result.refund_amount > 0) {
+                        const refundDiv = document.getElementById(`refund-message-${bookingId}`);
+                        refundDiv.innerHTML = `
+                            <div class="refund-message">
+                                Refund of Rs.${result.refund_amount} processed to your Smart Card.
+                                New balance: Rs.${result.new_balance}
+                            </div>
+                        `;
+                    }
+                    
+                    alert(result.message);
+                    
+                    // Refresh smart card data if user is on smart card page
+                    if (window.location.pathname === '/smart-card') {
+                        // Trigger smart card refresh
+                        if (typeof loadSmartCard === 'function') {
+                            await loadSmartCard();
+                        }
+                        if (typeof fetchTransactions === 'function') {
+                            await fetchTransactions();
+                        }
+                    }
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to cancel booking: ${error.detail}`);
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error cancelling booking:', error);
+                alert('Failed to cancel booking. Please try again.');
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', loadBookings);
+    </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Metro Mate - Stations Debug Test</title>
+</head>
+<body>
+    <h1>Stations Debug Test</h1>
+    
+    <select id="source-station">
+        <option value="">Loading stations...</option>
+    </select>
+    
+    <select id="dest-station">
+        <option value="">Loading stations...</option>
+    </select>
+    
+    <div id="debug-info"></div>
+    
+    <script>
+        const sourceSelect = document.getElementById('source-station');
+        const destSelect = document.getElementById('dest-station');
+        const debugInfo = document.getElementById('debug-info');
+        
+        async function fetchStations() {
+            try {
+                debugInfo.innerHTML = 'Fetching stations...';
+                console.log('Starting fetchStations...');
+                
+                const response = await fetch('/api/stations');
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const stations = await response.json();
+                console.log('Stations data:', stations);
+                
+                // Clear existing options
+                sourceSelect.innerHTML = '<option value="">Select Station</option>';
+                destSelect.innerHTML = '<option value="">Select Station</option>';
+                
+                // Add stations to dropdowns
+                stations.forEach(station => {
+                    const option1 = document.createElement('option');
+                    option1.value = station.name;
+                    option1.textContent = `${station.name} (${station.line})`;
+                    sourceSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = station.name;
+                    option2.textContent = `${station.name} (${station.line})`;
+                    destSelect.appendChild(option2);
+                });
+                
+                debugInfo.innerHTML = `✅ Success! Loaded ${stations.length} stations`;
+                
+            } catch (error) {
+                console.error('Error fetching stations:', error);
+                debugInfo.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        // Call fetchStations when page loads
+        document.addEventListener('DOMContentLoaded', fetchStations);
+    </script>
+</body>
+</html>

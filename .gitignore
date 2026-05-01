@@ -1,0 +1,19 @@
+# Local environment and generated artifacts
+venv/
+.venv/
+.env
+.env.*
+!.env.example
+backend/crowd_model.pkl
+
+# Python caches
+**/__pycache__/
+**/*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

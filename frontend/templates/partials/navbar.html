@@ -1,0 +1,143 @@
+<nav class="navbar">
+    <div class="container">
+        <!-- Logo -->
+        <a href="/home" class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><path d="M7 15h10"/><path d="M9 9h6"/><path d="M7 21v-4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><path d="M13 3h1a2 2 0 0 1 2 2v10H8V5a2 2 0 0 1 2-2h3z"/></svg>
+            <span class="text-xl font-bold">Metro <span class="text-accent">Mate</span></span>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <div class="hidden lg:flex items-center gap-4">
+            <a href="/home" class="nav-link" data-role="user-only">Home</a>
+            <a href="/stations" class="nav-link" data-role="user-only">Stations</a>
+            <a href="/nearby-places" class="nav-link" data-role="user-only">Nearby Places</a>
+            <a href="/lost-found" class="nav-link" data-role="user-only">Lost & Found</a>
+            <a href="/book-ticket" class="nav-link" data-role="user-only">Book Ticket</a>
+            <a href="/my-bookings" class="nav-link" data-role="user-only">My Bookings</a>
+            <a href="/smart-card" class="nav-link" data-role="user-only">Smart Card</a>
+            <a href="/dashboard" class="nav-link" data-role="user-only">Dashboard</a>
+            <a href="/admin" class="nav-link hidden" data-role="admin-only">Admin Dashboard</a>
+            <button onclick="logout()" class="nav-link bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Logout</button>
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="lg:hidden p-2" id="mobile-menu-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden lg:hidden absolute top-full left-0 right-0 bg-card border-t border-border">
+        <div class="container py-4 space-y-2">
+            <a href="/home" class="block nav-link" data-role="user-only">Home</a>
+            <a href="/stations" class="block nav-link" data-role="user-only">Stations</a>
+            <a href="/nearby-places" class="block nav-link" data-role="user-only">Nearby Places</a>
+            <a href="/lost-found" class="block nav-link" data-role="user-only">Lost & Found</a>
+            <a href="/book-ticket" class="block nav-link" data-role="user-only">Book Ticket</a>
+            <a href="/my-bookings" class="block nav-link" data-role="user-only">My Bookings</a>
+            <a href="/smart-card" class="block nav-link" data-role="user-only">Smart Card</a>
+            <a href="/dashboard" class="block nav-link" data-role="user-only">Dashboard</a>
+            <a href="/admin" class="block nav-link hidden" data-role="admin-only">Admin Dashboard</a>
+            <button onclick="logout()" class="w-full text-left nav-link bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<style>
+.nav-link {
+    color: var(--primary-foreground);
+    opacity: 0.8;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.hidden { display: none; }
+@media (min-width: 1024px) {
+    .lg\:flex { display: flex; }
+    .lg\:hidden { display: none; }
+}
+
+.space-y-2 > * + * { margin-top: 0.5rem; }
+</style>
+
+<script>
+(() => {
+    window.logout = async function logout() {
+        try {
+            await fetch('/logout', { method: 'POST' });
+        } catch (error) {
+            console.error('Logout request failed:', error);
+        } finally {
+            localStorage.removeItem('user');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('user_email');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_type');
+            localStorage.removeItem('auth_token');
+            sessionStorage.removeItem('user');
+
+            window.location.href = '/';
+        }
+    };
+
+    const applyRoleNavigation = () => {
+        const currentUserType = localStorage.getItem('auth_token')
+            ? (localStorage.getItem('user_type') || '').trim().toLowerCase()
+            : '';
+        const currentPath = window.location.pathname;
+        const isAdminOnlyPath =
+            currentPath === '/admin' ||
+            currentPath.startsWith('/admin/') ||
+            currentPath === '/analytics' ||
+            currentPath.startsWith('/analytics/');
+
+        const toggleVisibility = (selector, shouldShow) => {
+            document.querySelectorAll(selector).forEach((element) => {
+                element.classList.toggle('hidden', !shouldShow);
+            });
+        };
+
+        if (currentUserType === 'admin') {
+            toggleVisibility('[data-role="user-only"]', false);
+            toggleVisibility('[data-role="admin-only"]', true);
+
+            if (!isAdminOnlyPath) {
+                window.location.replace('/admin');
+                return;
+            }
+        } else if (currentUserType === 'user') {
+            toggleVisibility('[data-role="user-only"]', true);
+            toggleVisibility('[data-role="admin-only"]', false);
+
+            if (isAdminOnlyPath) {
+                window.location.replace('/home');
+                return;
+            }
+        } else {
+            toggleVisibility('[data-role="admin-only"]', false);
+        }
+
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileMenuToggle && mobileMenu) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyRoleNavigation);
+    } else {
+        applyRoleNavigation();
+    }
+})();
+</script>

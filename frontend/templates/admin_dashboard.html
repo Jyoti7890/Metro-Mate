@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .page-header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .stat-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        .stat-value { font-size: 1.75rem; font-weight: 700; }
+        .stat-label { font-size: 0.875rem; color: var(--muted-foreground); }
+        
+        .chart-placeholder {
+            height: 300px;
+            background: var(--muted);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted-foreground);
+            border: 2px dashed var(--border);
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Admin Dashboard</h1>
+            <p>Overview of metro operations, revenue, and AI-powered predictions.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="card stat-card">
+                <div class="stat-icon bg-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div>
+                    <div class="stat-value">45,231</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon bg-success"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+                <div>
+                    <div class="stat-value">38,456</div>
+                    <div class="stat-label">Active Cards</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon bg-warning"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                <div>
+                    <div class="stat-value">156</div>
+                    <div class="stat-label">Open Complaints</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon bg-accent"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                <div>
+                    <div class="stat-value">₹2.4L</div>
+                    <div class="stat-label">Today's Revenue</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Revenue Chart -->
+            <div class="lg:col-span-2">
+                <div class="card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Revenue Overview</h3>
+                        <a href="/analytics" class="btn btn-outline btn-sm">Full Report</a>
+                    </div>
+                    <div class="chart-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                        <span>Revenue Graph Integration Pending</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Complaints -->
+            <div class="card">
+                <h3 class="text-xl font-bold mb-6">Recent Reports</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 py-3 border-b border-border">
+                        <div class="p-2 bg-warning/10 text-warning rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
+                        <div>
+                            <div class="font-bold">Laptop Bag</div>
+                            <div class="text-xs text-muted-foreground">LF-001 • Central • 2h ago</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 py-3 border-b border-border">
+                        <div class="p-2 bg-info/10 text-info rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                        <div>
+                            <div class="font-bold">Umbrella</div>
+                            <div class="text-xs text-muted-foreground">LF-002 • Mall Road • 4h ago</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 py-3 border-b border-border">
+                        <div class="p-2 bg-success/10 text-success rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+                        <div>
+                            <div class="font-bold">Earphones</div>
+                            <div class="text-xs text-muted-foreground">LF-003 • Tech Park • 6h ago</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-full mt-6">View All Reports</button>
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+</body>
+</html>

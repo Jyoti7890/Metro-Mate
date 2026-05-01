@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Book Ticket</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .page-header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+        .booking-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 640px) {
+            .form-section { grid-template-columns: 1fr; }
+        }
+        .fare-summary {
+            background: var(--secondary);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            margin-top: 2rem;
+            display: none;
+        }
+        .fare-summary.active { display: block; }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .summary-total {
+            border-top: 1px solid var(--border);
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        .btn-full { width: 100%; margin-top: 1.5rem; }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--card);
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Book Ticket</h1>
+            <p>Plan your journey with dynamic fare calculation and digital tickets.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="booking-container">
+            <div class="card">
+                <h3 class="text-xl font-bold mb-6">Plan Your Journey</h3>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label class="form-label font-semibold">From Station</label>
+                        <select class="form-input" id="source-station">
+                            <option value="">Select Station</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label font-semibold">To Station</label>
+                        <select class="form-input" id="dest-station">
+                            <option value="">Select Station</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group mt-4">
+                    <label class="form-label font-semibold">How many tickets do you want to book?</label>
+                    <input type="number" class="form-input" id="ticket-count" min="1" max="10" value="1" placeholder="Enter number of tickets">
+                    <small class="text-muted-foreground">Maximum 10 tickets per booking</small>
+                </div>
+
+                <div class="form-group mt-4">
+                    <label class="form-label font-semibold">Enter the name for booking</label>
+                    <input type="text" class="form-input" id="booking-name" placeholder="Enter booking name">
+                </div>
+
+                <div class="form-group mt-4">
+                    <label class="form-label font-semibold">Select Payment Method</label>
+                    <select class="form-input" id="payment-method">
+                        <option value="">Select Payment Method</option>
+                        <option value="Debit Card">Debit Card</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Smart Card">Smart Card</option>
+                    </select>
+                </div>
+
+                <div class="fare-summary" id="fare-summary">
+                    <h4 class="font-bold mb-4">Booking Summary</h4>
+                    <div class="summary-item">
+                        <span>Booked By</span>
+                        <span id="user-name">Loading...</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>From Station</span>
+                        <span id="from-station">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>To Station</span>
+                        <span id="to-station">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Number of Tickets</span>
+                        <span id="ticket-count-summary">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Fare per Ticket</span>
+                        <span id="fare-per-ticket">₹0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total Stations</span>
+                        <span id="total-stations">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Base Fare</span>
+                        <span id="base-fare">₹0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Peak Hour Surcharge (20%)</span>
+                        <span id="peak-surcharge">₹0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Payment Method</span>
+                        <span id="payment-method-display">-</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total Fare</span>
+                        <span id="total-fare">₹0</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-accent btn-full" id="book-btn" disabled>Book Ticket</button>
+            </div>
+
+            <div class="card mt-8" id="user-stats" style="display: none;">
+                <div class="text-center">
+                    <h4 class="text-lg font-bold mb-2">Your Booking Statistics</h4>
+                    <p class="text-muted-foreground" id="booking-count">Loading your booking history...</p>
+                </div>
+            </div>
+
+            <div class="card mt-8" id="booking-success" style="display: none; border-color: var(--success);">
+                <div class="text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success mb-4"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <h3 class="text-2xl font-bold mb-2">Booking Successful!</h3>
+                    <p class="text-muted-foreground mb-4">Your ticket has been generated. You can find it in your dashboard.</p>
+                    <button onclick="goToDashboard()" class="btn btn-primary">Go to Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script>
+        // Global variables
+        let sourceSelect, destSelect, ticketCountInput, bookingNameInput, paymentMethodSelect;
+        let fareSummary, bookBtn, bookingSuccess, userStats, bookingCount;
+        let currentUserEmail, currentUserName;
+
+        // Function to navigate to dashboard
+        function goToDashboard() {
+            window.location.href = '/dashboard';
+        }
+
+        // Function to reset form for new booking
+        function resetForm() {
+            sourceSelect.value = '';
+            destSelect.value = '';
+            ticketCountInput.value = '1';
+            bookingNameInput.value = currentUserName || '';
+            paymentMethodSelect.value = '';
+            fareSummary.classList.remove('active');
+            bookingSuccess.style.display = 'none';
+            bookBtn.textContent = 'Book Ticket';
+            bookBtn.disabled = true;
+            hideErrorMessage(); // Clear any error messages
+            
+            // Restore original booking click handler
+            bookBtn.onclick = null;
+        }
+
+        // Function to load user booking statistics
+        async function loadUserStats() {
+            try {
+                const response = await fetch(`/api/user-bookings/${currentUserEmail}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    bookingCount.textContent = `You have booked ${data.total_tickets} tickets in ${data.total_bookings} bookings`;
+                    userStats.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading user stats:', error);
+                bookingCount.textContent = 'Unable to load booking statistics';
+                userStats.style.display = 'block';
+            }
+        }
+
+        // Fetch stations from the new API
+        async function fetchStations() {
+            try {
+                console.log('Fetching stations...');
+                const response = await fetch('/api/stations');
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const stations = await response.json();
+                console.log('Stations data:', stations);
+                console.log('Number of stations:', stations.length);
+                
+                // Clear existing options except the first one
+                sourceSelect.innerHTML = '<option value="">Select Station</option>';
+                destSelect.innerHTML = '<option value="">Select Station</option>';
+
+                stations.forEach(station => {
+                    const option1 = document.createElement('option');
+                    option1.value = station.name;
+                    option1.textContent = `${station.name} (${station.line})`;
+                    sourceSelect.appendChild(option1);
+
+                    const option2 = document.createElement('option');
+                    option2.value = station.name;
+                    option2.textContent = `${station.name} (${station.line})`;
+                    destSelect.appendChild(option2);
+                });
+                
+                console.log('Dropdowns populated successfully');
+                console.log('Source dropdown options:', sourceSelect.options.length);
+                console.log('Dest dropdown options:', destSelect.options.length);
+                
+            } catch (error) {
+                console.error('Error fetching stations:', error);
+                // Show error in dropdown for debugging
+                sourceSelect.innerHTML = '<option value="">Error loading stations</option>';
+                destSelect.innerHTML = '<option value="">Error loading stations</option>';
+            }
+        }
+
+        // Initialize everything after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            
+            // Get DOM elements
+            sourceSelect = document.getElementById('source-station');
+            destSelect = document.getElementById('dest-station');
+            ticketCountInput = document.getElementById('ticket-count');
+            bookingNameInput = document.getElementById('booking-name');
+            paymentMethodSelect = document.getElementById('payment-method');
+            fareSummary = document.getElementById('fare-summary');
+            bookBtn = document.getElementById('book-btn');
+            bookingSuccess = document.getElementById('booking-success');
+            userStats = document.getElementById('user-stats');
+            bookingCount = document.getElementById('booking-count');
+
+            console.log('DOM elements found:', {
+                sourceSelect: !!sourceSelect,
+                destSelect: !!destSelect,
+                bookBtn: !!bookBtn
+            });
+
+            // Get current user from localStorage
+            currentUserEmail = localStorage.getItem('user_email');
+            currentUserName = localStorage.getItem('user_name');
+
+            // Check if user is logged in
+            if (!currentUserEmail) {
+                showErrorMessage('Please login first to book tickets.');
+                bookBtn.textContent = 'Login Required';
+                bookBtn.disabled = true;
+                // Redirect to login after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+                return;
+            }
+
+            // Set default values
+            bookingNameInput.value = currentUserName || '';
+
+            // Initialize user name in summary
+            document.getElementById('user-name').textContent = currentUserName || 'Loading...';
+
+            // Fetch stations
+            fetchStations();
+
+            // Load user stats
+            loadUserStats();
+
+            // Function to show error message
+            function showErrorMessage(message) {
+                let errorDiv = document.getElementById('error-message');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.id = 'error-message';
+                    errorDiv.className = 'error-message';
+                    errorDiv.style.cssText = `
+                        background-color: #ef4444;
+                        color: white;
+                        padding: 0.75rem;
+                        border-radius: 0.5rem;
+                        margin-bottom: 1rem;
+                        font-size: 0.875rem;
+                        text-align: center;
+                    `;
+                    bookBtn.parentNode.insertBefore(errorDiv, bookBtn);
+                }
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+
+            // Function to hide error message
+            function hideErrorMessage() {
+                let errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            }
+
+            // Function to show success message
+            function showSuccessMessage(message) {
+                let successDiv = document.getElementById('success-message');
+                if (!successDiv) {
+                    successDiv = document.createElement('div');
+                    successDiv.id = 'success-message';
+                    successDiv.className = 'success-message';
+                    successDiv.style.cssText = `
+                        background-color: #10b981;
+                        color: white;
+                        padding: 0.75rem;
+                        border-radius: 0.5rem;
+                        margin-bottom: 1rem;
+                        font-size: 0.875rem;
+                        text-align: center;
+                    `;
+                    bookBtn.parentNode.insertBefore(successDiv, bookBtn);
+                }
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 5000);
+            }
+
+            async function updateFare() {
+                const source = sourceSelect.value;
+                const dest = destSelect.value;
+                const ticketCount = parseInt(ticketCountInput.value) || 1;
+                const paymentMethod = paymentMethodSelect.value;
+
+                if (source && dest && source !== dest && ticketCount > 0 && paymentMethod) {
+                    try {
+                        // Valid selection - enable booking
+                        bookBtn.disabled = false;
+                        bookBtn.textContent = 'Book Ticket';
+                        
+                        // Clear any previous error messages
+                        hideErrorMessage();
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showErrorMessage('Error validating booking. Please try again.');
+                        bookBtn.disabled = true;
+                    }
+                } else if (source && dest && source === dest) {
+                    // Same station selected - show error and disable button
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Select Different Stations';
+                    showErrorMessage('Please select different stations for from and to destinations.');
+                } else if (ticketCount <= 0) {
+                    // Invalid ticket count
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Enter Valid Ticket Count';
+                    showErrorMessage('Ticket count must be greater than 0.');
+                } else if (!paymentMethod) {
+                    // Payment method not selected
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Select Payment Method';
+                    showErrorMessage('Please select a payment method.');
+                } else {
+                    // Incomplete selection
+                    fareSummary.classList.remove('active');
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Book Ticket';
+                    hideErrorMessage();
+                }
+            }
+
+            // Helper function to calculate estimated fare
+            function calculateEstimatedFare(from, to, tickets) {
+                // Simple fare calculation (base fare + stations * 5) * tickets
+                // This is approximate since we don't have exact station data here
+                const baseFare = 10;
+                const estimatedStations = 5; // Average stations
+                const farePerTicket = baseFare + (estimatedStations * 5);
+                const peakSurcharge = farePerTicket * 0.2; // Assume peak hours
+                return Math.round((farePerTicket + peakSurcharge) * tickets);
+            }
+
+            // Add event listeners
+            sourceSelect.addEventListener('change', updateFare);
+            destSelect.addEventListener('change', updateFare);
+            ticketCountInput.addEventListener('input', updateFare);
+            paymentMethodSelect.addEventListener('change', updateFare);
+
+            // Booking button click handler
+            bookBtn.addEventListener('click', async () => {
+                const source = sourceSelect.value;
+                const dest = destSelect.value;
+                const ticketCount = parseInt(ticketCountInput.value) || 1;
+                const bookingName = bookingNameInput.value.trim() || currentUserName;
+                const paymentMethod = paymentMethodSelect.value;
+
+                // Client-side validation
+                if (!source || !dest) {
+                    showErrorMessage('Please select both from and to stations.');
+                    return;
+                }
+
+                if (source === dest) {
+                    showErrorMessage('Please select different stations for from and to destinations.');
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Select Different Stations';
+                    return;
+                }
+
+                if (ticketCount <= 0) {
+                    showErrorMessage('Ticket count must be greater than 0.');
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Enter Valid Ticket Count';
+                    return;
+                }
+
+                if (!paymentMethod) {
+                    showErrorMessage('Please select a payment method.');
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Select Payment Method';
+                    return;
+                }
+
+                bookBtn.textContent = 'Processing...';
+                bookBtn.disabled = true;
+                hideErrorMessage();
+
+                try {
+                    const response = await fetch('/api/book-ticket', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            from_station: source,
+                            to_station: dest,
+                            ticket_count: ticketCount,
+                            booking_name: bookingName,
+                            payment_method: paymentMethod,
+                            user_email: currentUserEmail
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Update booking summary
+                        document.getElementById('user-name').textContent = data.user_name;
+                        document.getElementById('from-station').textContent = data.from_station;
+                        document.getElementById('to-station').textContent = data.to_station;
+                        document.getElementById('ticket-count-summary').textContent = data.ticket_count;
+                        document.getElementById('fare-per-ticket').textContent = `Rs.${data.fare_per_ticket}`;
+                        document.getElementById('total-stations').textContent = data.stations;
+                        document.getElementById('base-fare').textContent = `Rs.${data.baseFare}`;
+                        document.getElementById('peak-surcharge').textContent = `Rs.${data.surcharge}`;
+                        document.getElementById('payment-method-display').textContent = data.payment_method;
+                        document.getElementById('total-fare').textContent = `Rs.${data.totalFare}`;
+                        
+                        fareSummary.classList.add('active');
+                        bookingSuccess.style.display = 'block';
+                        
+                        // TASK 10: SHOW SMART CARD MESSAGE
+                        if (data.message && data.payment_method === 'Smart Card') {
+                            showSuccessMessage(data.message);
+                        }
+                        
+                        loadUserStats();
+                        bookBtn.textContent = 'Book Another Ticket';
+                        bookBtn.disabled = false;
+                        bookBtn.onclick = resetForm;
+                        
+                    } else {
+                        const err = await response.json();
+                        showErrorMessage(`Booking failed: ${err.detail}`);
+                        bookBtn.textContent = 'Book Ticket';
+                        bookBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error booking ticket:', error);
+                    showErrorMessage('Error booking ticket. Please try again.');
+                    bookBtn.textContent = 'Book Ticket';
+                    bookBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - User Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .page-header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 4rem 0 3rem;
+            margin-bottom: 2rem;
+        }
+        .dashboard-header-shell {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .dashboard-main {
+            padding-bottom: 3rem;
+        }
+        .dashboard-section {
+            margin-bottom: 2rem;
+        }
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .kpi-grid,
+        .insight-grid,
+        .quick-actions-grid {
+            display: grid;
+            gap: 1rem;
+        }
+        .kpi-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+        .metric-card {
+            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 1.1rem;
+            box-shadow: var(--shadow-card);
+        }
+        .metric-label,
+        .chart-subtitle,
+        .helper-text {
+            color: var(--muted-foreground);
+            font-size: 0.875rem;
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 0.35rem;
+        }
+        .chart-card canvas {
+            width: 100%;
+            height: 280px !important;
+        }
+        .table-shell {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        .dashboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .dashboard-table th,
+        .dashboard-table td {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .dashboard-table th {
+            color: var(--muted-foreground);
+            font-weight: 600;
+            background: var(--secondary);
+        }
+        .dashboard-table tr:last-child td {
+            border-bottom: none;
+        }
+        .list-stack,
+        .alert-list,
+        .activity-list {
+            display: grid;
+            gap: 0.85rem;
+        }
+        .info-row {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            background: var(--secondary);
+        }
+        .status-active,
+        .status-info {
+            color: var(--info);
+            border-color: var(--info);
+        }
+        .status-warning,
+        .status-searching,
+        .status-pending,
+        .status-matched {
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+        .status-success,
+        .status-resolved,
+        .status-credit {
+            color: var(--success);
+            border-color: var(--success);
+        }
+        .status-danger,
+        .status-cancelled,
+        .status-debit {
+            color: var(--destructive);
+            border-color: var(--destructive);
+        }
+        .insight-grid {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        .insight-card,
+        .alert-item,
+        .activity-item,
+        .quick-action {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            background: var(--card);
+        }
+        .alert-item.warning { border-left: 4px solid var(--warning); }
+        .alert-item.info,
+        .alert-item.neutral { border-left: 4px solid var(--info); }
+        .alert-item.danger { border-left: 4px solid var(--destructive); }
+        .quick-actions-grid {
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+        .quick-action {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+        .refresh-cluster {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .refresh-meta {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+            background: var(--card);
+            color: var(--foreground);
+        }
+        .empty-state,
+        .dashboard-error {
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--muted-foreground);
+        }
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.85rem;
+            margin-bottom: 1rem;
+        }
+        .hidden-panel {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .page-header {
+                padding-top: 3rem;
+            }
+            .dashboard-header-shell {
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="page-header">
+        <div class="container dashboard-header-shell">
+            <div>
+                <div class="text-sm opacity-70">Metro Mate</div>
+                <h1 id="dashboard-greeting" class="text-3xl font-bold">Your Personalized Dashboard</h1>
+                <p id="dashboard-subtitle" class="opacity-90">Fresh travel, booking, smart card, and complaint insights for your account.</p>
+            </div>
+            <div class="refresh-cluster">
+                <div class="refresh-meta">
+                    <div class="text-xs opacity-70">Last refreshed</div>
+                    <div id="last-updated" class="font-semibold">Loading...</div>
+                </div>
+                <button id="refresh-dashboard" class="btn btn-accent">Refresh Now</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container dashboard-main">
+        <div id="dashboard-error" class="dashboard-error hidden-panel"></div>
+
+        <section class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <h2 class="text-2xl font-bold">Top KPIs</h2>
+                    <p class="helper-text">Live metrics calculated only from your account activity.</p>
+                </div>
+            </div>
+            <div id="kpi-grid" class="kpi-grid"></div>
+        </section>
+
+        <section class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <h2 class="text-2xl font-bold">Travel Analytics</h2>
+                    <p class="helper-text">Booking, spending, route, payment, smart card, and complaint patterns.</p>
+                </div>
+            </div>
+            <div class="analytics-grid">
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Travel Activity</h3><p class="chart-subtitle">Last 7 days</p></div></div><canvas id="travel-history-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Spending Trend</h3><p class="chart-subtitle">Last 30 days</p></div></div><canvas id="spending-trend-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Most Used Stations</h3><p class="chart-subtitle">Top source stations</p></div></div><canvas id="most-used-stations-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Frequent Routes</h3><p class="chart-subtitle">Top route combinations</p></div></div><canvas id="routes-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Payment Methods</h3><p class="chart-subtitle">Booking distribution</p></div></div><canvas id="payment-methods-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Time of Day</h3><p class="chart-subtitle">Morning to night usage</p></div></div><canvas id="time-of-day-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Smart Card Trend</h3><p class="chart-subtitle">Credit vs debit</p></div></div><canvas id="smart-card-trend-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Complaint Status</h3><p class="chart-subtitle">Complaint lifecycle split</p></div></div><canvas id="complaint-status-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Weekday vs Weekend</h3><p class="chart-subtitle">Travel count comparison</p></div></div><canvas id="weekday-weekend-chart"></canvas></div>
+                <div class="card chart-card"><div class="section-heading"><div><h3 class="font-bold">Fare Range Analysis</h3><p class="chart-subtitle">Low, medium, high fare mix</p></div></div><canvas id="fare-ranges-chart"></canvas></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section two-column-layout">
+            <div class="card">
+                <div class="section-heading">
+                    <div>
+                        <h2 class="text-xl font-bold">Active Tickets</h2>
+                        <p class="helper-text">Only your currently active tickets.</p>
+                    </div>
+                </div>
+                <div id="active-tickets-list" class="list-stack"></div>
+            </div>
+            <div class="card">
+                <div class="section-heading">
+                    <div>
+                        <h2 class="text-xl font-bold">Booking History Summary</h2>
+                        <p class="helper-text">Recent bookings and latest booking counts.</p>
+                    </div>
+                </div>
+                <div id="booking-summary-grid" class="mini-grid"></div>
+                <div class="table-shell">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Route</th>
+                                <th>Date</th>
+                                <th>Fare</th>
+                                <th>Tickets</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-bookings-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-section two-column-layout">
+            <div class="card">
+                <div class="section-heading">
+                    <div>
+                        <h2 class="text-xl font-bold">Smart Card Summary</h2>
+                        <p class="helper-text">Balance, recharge behavior, and recent card activity.</p>
+                    </div>
+                </div>
+                <div id="smart-card-summary" class="mini-grid"></div>
+                <div class="table-shell">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Route</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="section-heading">
+                    <div>
+                        <h2 class="text-xl font-bold">Complaint Summary</h2>
+                        <p class="helper-text">Only complaints created from your account.</p>
+                    </div>
+                </div>
+                <div id="complaint-summary-grid" class="mini-grid"></div>
+                <div id="complaints-list" class="list-stack"></div>
+                <div class="section-heading" style="margin-top: 1rem;">
+                    <div><h3 class="font-bold">Potential Matches</h3></div>
+                </div>
+                <div id="matches-list" class="list-stack"></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section two-column-layout">
+            <div class="card">
+                <div class="section-heading">
+                    <div>
+                        <h2 class="text-xl font-bold">Personalized Predictions</h2>
+                        <p class="helper-text">Rule-based predictions from your own activity history.</p>
+                    </div>
+                </div>
+                <div id="predictions-grid" class="insight-grid"></div>
+            </div>
+            <div class="card">
+                <div class="section-heading">
+                    <div>
+                        <h2 class="text-xl font-bold">Recommendations</h2>
+                        <p class="helper-text">Helpful suggestions tailored to your travel and balance patterns.</p>
+                    </div>
+                </div>
+                <div id="recommendations-grid" class="insight-grid"></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section two-column-layout">
+            <div class="card">
+                <div class="section-heading">
+                    <div>
+                        <h2 class="text-xl font-bold">Alerts & Notices</h2>
+                        <p class="helper-text">Important updates relevant to your current dashboard data.</p>
+                    </div>
+                </div>
+                <div id="alerts-list" class="alert-list"></div>
+            </div>
+            <div class="card">
+                <div class="section-heading">
+                    <div>
+                        <h2 class="text-xl font-bold">Recent Activity</h2>
+                        <p class="helper-text">Your latest booking, smart card, and complaint events.</p>
+                    </div>
+                </div>
+                <div id="activity-list" class="activity-list"></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <h2 class="text-xl font-bold">Quick Actions</h2>
+                    <p class="helper-text">Jump straight into the next thing you are likely to need.</p>
+                </div>
+            </div>
+            <div id="quick-actions-grid" class="quick-actions-grid"></div>
+        </section>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/user_dashboard.js') }}"></script>
+</body>
+</html>

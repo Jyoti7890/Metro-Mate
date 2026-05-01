@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Smart Card</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .page-header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+        .card-preview {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e293b 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            aspect-ratio: 1.6 / 1;
+            max-width: 400px;
+            margin: 0 auto 2rem;
+        }
+        .card-chip {
+            width: 3rem;
+            height: 2rem;
+            background: #fbbf24;
+            border-radius: 0.25rem;
+            margin-bottom: 2rem;
+        }
+        .card-number {
+            font-size: 1.25rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+        .card-user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .card-balance {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .recharge-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .recharge-btn {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--card);
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .recharge-btn.active {
+            border-color: var(--accent);
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--accent);
+        }
+        /* Recent Usage Scrollable Container */
+        .recent-usage-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        /* Smooth scrollbar styling */
+        .recent-usage-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .recent-usage-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .recent-usage-container::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 10px;
+            border: 2px solid #f1f1f1;
+        }
+        .recent-usage-container::-webkit-scrollbar-thumb:hover {
+            background-color: #999;
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Smart Metro Card</h1>
+            <p>Manage your smart card, recharge online, and track usage history.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <!-- Card Management -->
+            <div>
+                <div class="card-preview">
+                    <div class="card-chip"></div>
+                    <div class="card-user-name" id="card-user-name">Loading...</div>
+                    <div class="card-number" id="card-number">**** **** **** ****</div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <div class="text-xs opacity-70">Balance</div>
+                            <div class="card-balance" id="card-balance">Loading...</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs opacity-70">Expiry</div>
+                            <div class="font-medium">12/28</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-6">Quick Recharge</h3>
+                    <div class="recharge-grid">
+                        <button class="recharge-btn" data-amount="100">₹100</button>
+                        <button class="recharge-btn" data-amount="200">₹200</button>
+                        <button class="recharge-btn active" data-amount="500">₹500</button>
+                        <button class="recharge-btn" data-amount="1000">₹1000</button>
+                        <button class="recharge-btn" data-amount="2000">₹2000</button>
+                        <button class="recharge-btn" id="custom-amount-btn">Custom</button>
+                    </div>
+                    <div class="form-group mb-4 hidden" id="custom-amount-group">
+                        <label class="form-label">Enter Amount (min ₹50)</label>
+                        <input type="number" class="form-input" id="custom-amount" placeholder="₹">
+                    </div>
+                    <button class="btn btn-accent btn-full" id="recharge-now-btn">Recharge Now</button>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="card">
+                <h3 class="text-xl font-bold mb-6">Recent Usage</h3>
+                <div class="recent-usage-container space-y-4" id="transactions-list">
+                    <div class="text-center text-muted-foreground py-8">
+                        Loading transactions...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script>
+        // Get current user from localStorage
+        const currentUserEmail = localStorage.getItem('user_email');
+        const currentUserName = localStorage.getItem('user_name');
+
+        // DOM elements - will be initialized after DOM loads
+        let rechargeBtns, customAmountGroup, customAmountInput, rechargeNowBtn, cardBalance, cardNumber, cardUserName, transactionsList;
+
+        let selectedAmount = 500;
+        let currentBalance = 0;
+
+        // Initialize DOM elements
+        function initializeDOMElements() {
+            rechargeBtns = document.querySelectorAll('.recharge-btn');
+            customAmountGroup = document.getElementById('custom-amount-group');
+            customAmountInput = document.getElementById('custom-amount');
+            rechargeNowBtn = document.getElementById('recharge-now-btn');
+            cardBalance = document.getElementById('card-balance');
+            cardNumber = document.getElementById('card-number');
+            cardUserName = document.getElementById('card-user-name');
+            transactionsList = document.getElementById('transactions-list');
+            
+            console.log('DOM Elements initialized:', {
+                rechargeBtns: rechargeBtns.length,
+                rechargeNowBtn: rechargeNowBtn ? 'found' : 'not found',
+                cardBalance: cardBalance ? 'found' : 'not found',
+                cardUserName: cardUserName ? 'found' : 'not found'
+            });
+        }
+
+        // Initialize button event listeners
+        function initializeButtonListeners() {
+            console.log('Initializing button listeners...');
+            
+            // Recharge amount buttons
+            if (rechargeBtns && rechargeBtns.length > 0) {
+                rechargeBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        console.log('Recharge button clicked:', btn.dataset.amount || 'custom');
+                        rechargeBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        if (btn.id === 'custom-amount-btn') {
+                            customAmountGroup.classList.remove('hidden');
+                            selectedAmount = 0;
+                        } else {
+                            customAmountGroup.classList.add('hidden');
+                            selectedAmount = parseInt(btn.dataset.amount);
+                        }
+                    });
+                });
+                console.log('Recharge buttons listeners attached');
+            } else {
+                console.error('Recharge buttons not found');
+            }
+            
+            // Recharge now button
+            if (rechargeNowBtn) {
+                rechargeNowBtn.addEventListener('click', async () => {
+                    console.log('Recharge Now button clicked');
+                    await handleRecharge();
+                });
+                console.log('Recharge Now button listener attached');
+            } else {
+                console.error('Recharge Now button not found');
+            }
+        }
+
+        // Handle recharge
+        async function handleRecharge() {
+            const amount = selectedAmount || parseInt(customAmountInput.value);
+            if (!amount || amount < 50) {
+                alert('Minimum recharge amount is Rs.50');
+                return;
+            }
+
+            console.log('Recharging card with amount:', amount);
+            rechargeNowBtn.textContent = 'Processing...';
+            rechargeNowBtn.disabled = true;
+
+            try {
+                const response = await fetch('/recharge-card', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: currentUserEmail,
+                        amount: amount
+                    })
+                });
+
+                console.log('Recharge response status:', response.status);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Recharge response data:', data);
+                    
+                    // Show success message
+                    alert(data.message);
+                    
+                    // Reload BOTH smart card data and transactions
+                    await loadSmartCard();       // update balance
+                    await fetchTransactions();   // update history
+                    
+                    // Reset button
+                    rechargeNowBtn.textContent = 'Recharge Now';
+                    rechargeNowBtn.disabled = false;
+                } else {
+                    const error = await response.json();
+                    console.error('Recharge error response:', error);
+                    
+                    // User-friendly error message
+                    if (response.status === 404) {
+                        alert('Smart card not found. Creating new card...');
+                        // Try to get smart card (which will auto-create)
+                        await loadSmartCard();
+                    } else {
+                        alert(`Recharge failed: ${error.detail || 'Please try again'}`);
+                    }
+                    
+                    rechargeNowBtn.textContent = 'Recharge Now';
+                    rechargeNowBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Recharge error:', error);
+                alert('Recharge failed. Please check your connection and try again.');
+                rechargeNowBtn.textContent = 'Recharge Now';
+                rechargeNowBtn.disabled = false;
+            }
+        }
+
+        // Check if user is logged in
+        if (!currentUserEmail) {
+            alert('Please login first to access smart card features.');
+            window.location.href = '/';
+            // Don't proceed if user is not logged in
+        } else {
+            // Initialize everything when DOM is ready
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('DOM loaded, initializing Smart Card system...');
+                
+                // Initialize DOM elements
+                initializeDOMElements();
+                
+                // Initialize button listeners
+                initializeButtonListeners();
+                
+                // Initialize smart card data
+                initializeSmartCard();
+            });
+        }
+
+        // Initialize smart card data
+        async function initializeSmartCard() {
+            try {
+                console.log('Initializing smart card for:', currentUserEmail);
+                
+                // Show loading states
+                if (cardBalance) {
+                    cardBalance.textContent = 'Loading...';
+                }
+                if (cardNumber) {
+                    cardNumber.textContent = '**** **** **** ****';
+                }
+                if (cardUserName) {
+                    cardUserName.textContent = 'Loading...';
+                }
+                if (transactionsList) {
+                    transactionsList.innerHTML = `
+                        <div class="text-center text-muted-foreground py-8">
+                            Loading transactions...
+                        </div>
+                    `;
+                }
+                
+                // Load smart card data
+                await loadSmartCard();
+                
+                // Load transactions - ALWAYS call this
+                console.log('Auto-loading transactions on page load...');
+                await fetchTransactions();
+                
+            } catch (error) {
+                console.error('Error initializing smart card:', error);
+                // Don't show annoying alert - just use fallback
+                if (cardBalance) {
+                    cardBalance.textContent = 'Rs.0';
+                }
+                if (cardNumber) {
+                    cardNumber.textContent = '**** **** **** ****';
+                }
+                if (cardUserName) {
+                    cardUserName.textContent = 'User';
+                }
+                if (transactionsList) {
+                    transactionsList.innerHTML = `
+                        <div class="text-center text-muted-foreground py-8">
+                            Failed to load data
+                        </div>
+                    `;
+                }
+                console.log('Smart card temporarily unavailable, using fallback');
+            }
+        }
+
+        // Load smart card data separately
+        async function loadSmartCard() {
+            try {
+                console.log('Loading smart card for:', currentUserEmail);
+                
+                const response = await fetch(`/smart-card/${currentUserEmail}`);
+                
+                if (response.ok) {
+                    const card = await response.json();
+                    currentBalance = card.balance;
+                    if (cardBalance) {
+                        cardBalance.textContent = `Rs.${currentBalance}`;
+                    }
+                    if (cardNumber) {
+                        cardNumber.textContent = card.card_number;
+                    }
+                    if (cardUserName) {
+                        cardUserName.textContent = card.full_name || 'User';
+                    }
+                    console.log('Smart card loaded:', card);
+                } else {
+                    const error = await response.json();
+                    console.error('Smart card API error:', error);
+                    
+                    // Try to create smart card
+                    console.log('Attempting to create smart card...');
+                    const createResponse = await fetch('/create-smart-card', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: currentUserEmail })
+                    });
+                    
+                    if (createResponse.ok) {
+                        const newCard = await createResponse.json();
+                        currentBalance = 0;
+                        if (cardBalance) {
+                            cardBalance.textContent = `Rs.${currentBalance}`;
+                        }
+                        if (cardNumber) {
+                            cardNumber.textContent = newCard.card_number;
+                        }
+                        if (cardUserName) {
+                            cardUserName.textContent = newCard.full_name || 'User';
+                        }
+                        console.log('Smart card created:', newCard);
+                    } else {
+                        const createError = await createResponse.json();
+                        console.error('Create card error:', createError);
+                        // Show user-friendly error but don't annoy them
+                        if (cardBalance) {
+                            cardBalance.textContent = 'Rs.0';
+                        }
+                        if (cardNumber) {
+                            cardNumber.textContent = '**** **** **** ****';
+                        }
+                        if (cardUserName) {
+                            cardUserName.textContent = 'User';
+                        }
+                        console.log('Smart card temporarily unavailable, using fallback');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading smart card:', error);
+                // Don't show annoying alert - just use fallback
+                if (cardBalance) {
+                    cardBalance.textContent = 'Rs.0';
+                }
+                if (cardNumber) {
+                    cardNumber.textContent = '**** **** **** ****';
+                }
+                if (cardUserName) {
+                    cardUserName.textContent = 'User';
+                }
+                console.log('Smart card temporarily unavailable, using fallback');
+            }
+        }
+
+        // Fetch transactions separately
+        async function fetchTransactions() {
+            try {
+                console.log('Loading transactions for:', currentUserEmail);
+                
+                if (transactionsList) {
+                    transactionsList.innerHTML = `
+                        <div class="text-center text-muted-foreground py-8">
+                            Loading transactions...
+                        </div>
+                    `;
+                }
+                
+                const response = await fetch(`/transactions/${currentUserEmail}?limit=10`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Transactions loaded successfully:', data);
+                    console.log('Number of transactions:', data.transactions.length);
+                    
+                    // Force display update
+                    displayTransactions(data.transactions);
+                    
+                    // Log each transaction for debugging
+                    data.transactions.forEach((t, index) => {
+                        console.log(`Transaction ${index + 1}:`, {
+                            type: t.type,
+                            amount: t.amount,
+                            from_station: t.from_station,
+                            to_station: t.to_station,
+                            created_at: t.created_at
+                        });
+                    });
+                } else {
+                    const error = await response.json();
+                    console.error('Failed to load transactions:', error);
+                    throw new Error(`Failed to load transactions: ${error.detail || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                if (transactionsList) {
+                    transactionsList.innerHTML = `
+                        <div class="text-center text-muted-foreground py-8">
+                            Failed to load transactions
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Display transactions
+            function displayTransactions(transactions) {
+                console.log('Displaying transactions:', transactions);
+                console.log('Number of transactions to display:', transactions.length);
+                
+                if (!transactionsList) {
+                    console.error('Transactions list element not found');
+                    return;
+                }
+                
+                if (transactions.length === 0) {
+                    console.log('No transactions to display');
+                    transactionsList.innerHTML = `
+                        <div class="text-center text-muted-foreground py-8">
+                            No transactions yet
+                        </div>
+                    `;
+                    return;
+                }
+
+                const transactionsHTML = transactions.map((transaction, index) => {
+                    console.log(`Processing transaction ${index + 1}:`, transaction);
+                    
+                    const date = new Date(transaction.created_at);
+                    const dateStr = date.toLocaleDateString('en-IN', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric' 
+                    });
+                    const timeStr = date.toLocaleTimeString('en-IN', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+
+                    let description = '';
+                    let amountClass = '';
+                    let amountSign = '';
+
+                    if (transaction.type === 'debit') {
+                        // Show station names for booking
+                        description = transaction.from_station && transaction.to_station 
+                            ? `${transaction.from_station} to ${transaction.to_station}`
+                            : 'Journey';
+                        amountClass = 'text-destructive';
+                        amountSign = '-';
+                    } else {
+                        // Check if it's a refund (has station names) or regular recharge
+                        if (transaction.from_station && transaction.to_station) {
+                            // This is a refund
+                            description = `Refund: ${transaction.from_station} to ${transaction.to_station}`;
+                        } else {
+                            // This is a regular recharge
+                            description = 'Recharge';
+                        }
+                        amountClass = 'text-success';
+                        amountSign = '+';
+                    }
+
+                    console.log(`Transaction ${index + 1} display:`, {
+                        description,
+                        amount: `${amountSign}Rs.${transaction.amount}`,
+                        type: transaction.type
+                    });
+
+                    return `
+                        <div class="flex justify-between items-center py-3 border-b border-border">
+                            <div>
+                                <div class="font-semibold">${description}</div>
+                                <div class="text-xs text-muted-foreground">${dateStr} • ${timeStr}</div>
+                            </div>
+                            <div class="${amountClass} font-semibold">
+                                ${amountSign}Rs.${transaction.amount}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                console.log('Setting transactions HTML...');
+                transactionsList.innerHTML = transactionsHTML;
+                console.log('Transactions display updated successfully');
+            }
+        </script>
+    </body>
+</html>

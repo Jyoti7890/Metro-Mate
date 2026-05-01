@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Stations</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .station-hero {
+            background:
+                radial-gradient(circle at top left, rgba(249, 115, 22, 0.22), transparent 28%),
+                linear-gradient(135deg, #0f1a27 0%, #13263b 56%, #19354f 100%);
+            color: var(--primary-foreground);
+            padding: 4.25rem 0 5.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .station-hero-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+            gap: 2rem;
+            align-items: end;
+        }
+
+        .station-hero h1 {
+            font-size: clamp(2.3rem, 4vw, 3.5rem);
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+
+        .station-hero p {
+            max-width: 760px;
+            opacity: 0.82;
+        }
+
+        .hero-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 0.8rem;
+        }
+
+        .hero-metric {
+            min-width: 150px;
+            padding: 1rem 1.05rem;
+            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .hero-metric span {
+            display: block;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            opacity: 0.7;
+            margin-bottom: 0.35rem;
+        }
+
+        .hero-metric strong {
+            font-size: 1.4rem;
+        }
+
+        .station-shell {
+            margin-top: -2.6rem;
+            position: relative;
+            z-index: 2;
+            padding-bottom: 4rem;
+        }
+
+        .station-toolbar,
+        .line-section {
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(15, 26, 39, 0.08);
+            border-radius: 1.1rem;
+            box-shadow: var(--shadow-card);
+        }
+
+        .station-toolbar {
+            padding: 1rem;
+            margin-bottom: 1.1rem;
+        }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: minmax(260px, 1fr) 170px 160px auto;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .search-shell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.95rem;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .toolbar-control {
+            display: grid;
+            gap: 0.35rem;
+        }
+
+        .toolbar-control-label {
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted-foreground);
+            font-weight: 700;
+        }
+
+        .toolbar-select {
+            width: 100%;
+            padding: 0.85rem 0.95rem;
+            border: 1px solid var(--border);
+            border-radius: 0.95rem;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            color: var(--foreground);
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .toolbar-select:focus {
+            border-color: var(--accent);
+        }
+
+        .search-shell svg {
+            color: var(--muted-foreground);
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 1rem;
+            color: var(--foreground);
+        }
+
+        .search-note,
+        .page-feedback {
+            color: var(--muted-foreground);
+            font-size: 0.9rem;
+        }
+
+        .page-feedback {
+            min-height: 1.35rem;
+            margin-top: 0.7rem;
+        }
+
+        .page-feedback.is-loading { color: var(--info); }
+        .page-feedback.is-success { color: var(--success); }
+        .page-feedback.is-error { color: var(--destructive); }
+
+        .state-banner {
+            padding: 0.95rem 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.92rem;
+        }
+
+        .state-banner.error {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.16);
+            color: #b91c1c;
+        }
+
+        .state-banner.empty {
+            background: rgba(15, 26, 39, 0.04);
+            border: 1px solid rgba(15, 26, 39, 0.08);
+            color: var(--muted-foreground);
+        }
+
+        .station-directory {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .line-head {
+            border-top: 5px solid var(--line-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.15rem;
+            background: linear-gradient(180deg, rgba(15, 26, 39, 0.02), rgba(15, 26, 39, 0.05));
+        }
+
+        .line-head h2 {
+            font-size: 1.05rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .line-head p,
+        .line-count,
+        .station-helper,
+        .detail-meta {
+            color: var(--muted-foreground);
+            font-size: 0.84rem;
+        }
+
+        .station-row {
+            border-top: 1px solid rgba(15, 26, 39, 0.06);
+            position: relative;
+        }
+
+        .station-row:first-child {
+            border-top: none;
+        }
+
+        .station-row::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: var(--line-color);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .station-row.is-expanded::before,
+        .station-row:hover::before {
+            opacity: 1;
+        }
+
+        .station-head {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.2rem 0.85rem;
+            background: transparent;
+            text-align: left;
+        }
+
+        .station-title {
+            font-size: 1.05rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .station-meta,
+        .prediction-main,
+        .prediction-hours,
+        .detail-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .station-action {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            color: var(--muted-foreground);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .chevron {
+            width: 1rem;
+            height: 1rem;
+            transition: transform 0.2s ease;
+        }
+
+        .station-row.is-expanded .chevron {
+            transform: rotate(180deg);
+        }
+
+        .line-pill,
+        .meta-pill,
+        .level-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .line-pill { background: rgba(15, 26, 39, 0.08); }
+        .meta-pill { background: rgba(15, 26, 39, 0.05); color: var(--muted-foreground); }
+        .meta-pill.interchange { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
+        .meta-pill.elevated { background: rgba(124, 58, 237, 0.12); color: #6d28d9; }
+        .level-pill.level-low { background: rgba(22, 163, 74, 0.14); color: #15803d; }
+        .level-pill.level-medium { background: rgba(245, 158, 11, 0.18); color: #b45309; }
+        .level-pill.level-high { background: rgba(239, 68, 68, 0.16); color: #b91c1c; }
+
+        .prediction-area {
+            padding: 0 1.2rem 1rem;
+        }
+
+        .prediction-strip {
+            display: grid;
+            gap: 0.8rem;
+            padding: 0.9rem 1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(15, 26, 39, 0.08);
+            background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), #ffffff);
+        }
+
+        .prediction-strip.is-error {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.16);
+            color: #b91c1c;
+        }
+
+        .metric {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted-foreground);
+        }
+
+        .metric-value {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .hour-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.55rem 0.7rem;
+            border-radius: 0.85rem;
+            border: 1px solid rgba(15, 26, 39, 0.08);
+            background: #ffffff;
+            font-size: 0.84rem;
+        }
+
+        .hour-pill strong {
+            color: var(--foreground);
+        }
+
+        .hour-arrow {
+            color: var(--muted-foreground);
+            font-weight: 600;
+        }
+
+        .hour-pill.level-low {
+            border-color: rgba(22, 163, 74, 0.18);
+            background: rgba(22, 163, 74, 0.06);
+        }
+
+        .hour-pill.level-medium {
+            border-color: rgba(245, 158, 11, 0.22);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .hour-pill.level-high {
+            border-color: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.06);
+        }
+
+        .recommendation {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            font-size: 0.92rem;
+        }
+
+        .recommendation strong {
+            font-size: 0.78rem;
+            color: var(--muted-foreground);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .timeline-block {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .prediction-details {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed rgba(15, 26, 39, 0.12);
+        }
+
+        .detail-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding-top: 0.85rem;
+        }
+
+        .refresh-btn {
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid rgba(15, 26, 39, 0.1);
+            background: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .refresh-btn:hover {
+            background: var(--muted);
+        }
+
+        .skeleton {
+            display: inline-block;
+            height: 0.82rem;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(15, 26, 39, 0.06), rgba(15, 26, 39, 0.14), rgba(15, 26, 39, 0.06));
+            background-size: 200% 100%;
+            animation: shimmer 1.2s linear infinite;
+        }
+
+        .skeleton.short { width: 84px; }
+        .skeleton.medium { width: 138px; }
+        .skeleton.long { width: 220px; }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        @media (max-width: 1024px) {
+            .station-hero-grid { grid-template-columns: 1fr; }
+            .hero-metrics { justify-content: flex-start; }
+        }
+
+        @media (max-width: 768px) {
+            .station-hero { padding: 3.75rem 0 5rem; }
+            .search-row { grid-template-columns: 1fr; }
+            .station-head { flex-direction: column; align-items: flex-start; }
+            .station-action { width: 100%; justify-content: space-between; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="station-hero">
+        <div class="container station-hero-grid">
+            <div>
+                <h1>Metro Crowd Forecast</h1>
+                <p>Choose a station, set a custom hour and day type, and see a cleaner selected-time crowd forecast with the next three hours in one metro dashboard row.</p>
+            </div>
+            <div class="hero-metrics">
+                <div class="hero-metric">
+                    <span>Stations Loaded</span>
+                    <strong>{{ station_count }}</strong>
+                </div>
+                <div class="hero-metric">
+                    <span>Prediction Window</span>
+                    <strong>4 Hours</strong>
+                </div>
+                <div class="hero-metric">
+                    <span>Forecast Type</span>
+                    <strong>Live Crowd Data</strong>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container station-shell">
+        <section class="station-toolbar">
+            <form id="station-search-form">
+                <div class="search-row">
+                    <label class="search-shell" for="station-search">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.3-4.3"></path>
+                        </svg>
+                        <input type="text" class="search-input" id="station-search" list="station-suggestions" placeholder="Search station name" autocomplete="off">
+                    </label>
+                    <label class="toolbar-control" for="forecast-hour">
+                        <span class="toolbar-control-label">Selected Time</span>
+                        <select id="forecast-hour" class="toolbar-select"></select>
+                    </label>
+                    <label class="toolbar-control" for="day-type">
+                        <span class="toolbar-control-label">Day Type</span>
+                        <select id="day-type" class="toolbar-select">
+                            <option value="weekday">Weekday</option>
+                            <option value="weekend">Weekend</option>
+                        </select>
+                    </label>
+                    <button class="btn btn-accent" type="submit">Check Crowd Forecast</button>
+                </div>
+                <p class="search-note">Choose a station, selected hour, and day type to generate a more realistic crowd-level forecast for that exact time.</p>
+                <datalist id="station-suggestions">
+                    {% for station in stations %}
+                    <option value="{{ station.name }}"></option>
+                    {% endfor %}
+                </datalist>
+            </form>
+            <div class="page-feedback" id="page-feedback" aria-live="polite"></div>
+        </section>
+
+        {% if page_error %}
+        <div class="state-banner error">{{ page_error }}</div>
+        {% endif %}
+
+        {% if not stations_by_line and not page_error %}
+        <div class="state-banner empty">No stations are available right now.</div>
+        {% endif %}
+
+        <div class="state-banner empty hidden" id="no-results-state">No stations match that search.</div>
+
+        <section class="station-directory" id="station-directory">
+            {% for group in stations_by_line %}
+            <section class="line-section" style="--line-color: {{ group.line_color }}">
+                <div class="line-head">
+                    <div>
+                        <h2>{{ group.line }}</h2>
+                        <p>Expandable station rows with selected-time forecast strips.</p>
+                    </div>
+                    <span class="line-count">{{ group.stations | length }} stations</span>
+                </div>
+
+                {% for station in group.stations %}
+                <article class="station-row" style="--line-color: {{ station.line_color }}" data-station-row data-station-name="{{ station.name | e }}" data-station-line="{{ station.line | e }}">
+                    <button class="station-head" type="button" data-toggle-row aria-expanded="false">
+                        <div>
+                            <h3 class="station-title">{{ station.name }}</h3>
+                            <div class="station-meta">
+                                <span class="line-pill">{{ station.line }}</span>
+                                {% if station.is_interchange %}
+                                <span class="meta-pill interchange">Interchange</span>
+                                {% endif %}
+                                {% if station.is_elevated %}
+                                <span class="meta-pill elevated">Elevated</span>
+                                {% endif %}
+                                <span class="station-helper">Expand this row to load a selected-time crowd forecast and the next 3 hours.</span>
+                            </div>
+                        </div>
+                        <div class="station-action">
+                            <span>Forecast</span>
+                            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        </div>
+                    </button>
+
+                    <div class="prediction-area">
+                        <div class="prediction-strip" data-prediction-summary>
+                            Selected Time Forecast will appear here. Pick a time, choose weekday or weekend, and load a station forecast.
+                        </div>
+                        <div class="prediction-details hidden" data-prediction-details></div>
+                    </div>
+                </article>
+                {% endfor %}
+            </section>
+            {% endfor %}
+        </section>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script>
+        const stationRows = Array.from(document.querySelectorAll("[data-station-row]"));
+        const searchForm = document.getElementById("station-search-form");
+        const searchInput = document.getElementById("station-search");
+        const hourSelect = document.getElementById("forecast-hour");
+        const dayTypeSelect = document.getElementById("day-type");
+        const pageFeedback = document.getElementById("page-feedback");
+        const noResultsState = document.getElementById("no-results-state");
+        const lineSections = Array.from(document.querySelectorAll(".line-section"));
+        const predictionCache = new Map();
+
+        function normalizeName(value) {
+            return value.trim().toLowerCase();
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function formatHour(hourValue) {
+            if (/[AP]M/i.test(String(hourValue))) {
+                return hourValue;
+            }
+            const hour = Number.parseInt(String(hourValue).split(":")[0], 10);
+            if (Number.isNaN(hour)) {
+                return hourValue;
+            }
+            const suffix = hour >= 12 ? "PM" : "AM";
+            const twelveHour = hour % 12 || 12;
+            return `${twelveHour} ${suffix}`;
+        }
+
+        function formatCategoryLabel(category) {
+            const normalized = String(category || "").trim().toLowerCase();
+            if (!normalized) {
+                return "Residential";
+            }
+            return normalized
+                .split(/[_\\s-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(" ");
+        }
+
+        function levelClass(level) {
+            return `level-${String(level).toLowerCase()}`;
+        }
+
+        function populateHourOptions() {
+            const hourOptions = [];
+
+            for (let hour = 0; hour < 24; hour += 1) {
+                const option = document.createElement("option");
+                option.value = String(hour);
+                option.textContent = `${formatHour(`${hour}:00`)} (${String(hour).padStart(2, "0")}:00)`;
+                hourOptions.push(option);
+            }
+
+            hourSelect.replaceChildren(...hourOptions);
+            hourSelect.value = String(new Date().getHours());
+            dayTypeSelect.value = [0, 6].includes(new Date().getDay()) ? "weekend" : "weekday";
+        }
+
+        function getSelectedForecastConfig() {
+            const hourValue = hourSelect.value || String(new Date().getHours());
+            const dayTypeValue = dayTypeSelect.value || "weekday";
+
+            return {
+                hour: hourValue,
+                dayType: dayTypeValue,
+                hourLabel: formatHour(`${hourValue}:00`),
+                dayTypeLabel: dayTypeValue === "weekend" ? "Weekend" : "Weekday"
+            };
+        }
+
+        function buildPredictionCacheKey(stationName, hourValue, dayTypeValue) {
+            return `${normalizeName(stationName)}|${hourValue}|${dayTypeValue}`;
+        }
+
+        function setPageFeedback(type, message) {
+            pageFeedback.className = "page-feedback";
+            if (type) {
+                pageFeedback.classList.add(`is-${type}`);
+            }
+            pageFeedback.textContent = message || "";
+        }
+
+        function filterRows(query) {
+            const normalizedQuery = normalizeName(query);
+            let visibleCount = 0;
+
+            stationRows.forEach((row) => {
+                const stationName = normalizeName(row.dataset.stationName || "");
+                const stationLine = normalizeName(row.dataset.stationLine || "");
+                const isVisible = !normalizedQuery || stationName.includes(normalizedQuery) || stationLine.includes(normalizedQuery);
+                row.style.display = isVisible ? "" : "none";
+                if (isVisible) {
+                    visibleCount += 1;
+                }
+            });
+
+            lineSections.forEach((section) => {
+                const hasVisibleRow = Array.from(section.querySelectorAll("[data-station-row]")).some((row) => row.style.display !== "none");
+                section.style.display = hasVisibleRow ? "" : "none";
+            });
+
+            noResultsState.classList.toggle("hidden", visibleCount > 0 || !normalizedQuery);
+            return stationRows.filter((row) => row.style.display !== "none");
+        }
+
+        function setRowExpanded(row, expanded) {
+            const button = row.querySelector("[data-toggle-row]");
+            const details = row.querySelector("[data-prediction-details]");
+            row.classList.toggle("is-expanded", expanded);
+            button.setAttribute("aria-expanded", expanded ? "true" : "false");
+            details.classList.toggle("hidden", !expanded || row.dataset.loaded !== "true");
+        }
+
+        function renderLoading(row) {
+            const summary = row.querySelector("[data-prediction-summary]");
+            const details = row.querySelector("[data-prediction-details]");
+            summary.className = "prediction-strip";
+            summary.innerHTML = `
+                <div class="prediction-main">
+                    <span class="skeleton short"></span>
+                    <span class="skeleton medium"></span>
+                    <span class="skeleton short"></span>
+                </div>
+                <div class="prediction-hours">
+                    <span class="skeleton medium"></span>
+                    <span class="skeleton medium"></span>
+                    <span class="skeleton medium"></span>
+                </div>
+                <span class="skeleton long"></span>
+            `;
+            details.classList.add("hidden");
+        }
+
+        function renderError(row, message) {
+            const summary = row.querySelector("[data-prediction-summary]");
+            const details = row.querySelector("[data-prediction-details]");
+            summary.className = "prediction-strip is-error";
+            summary.textContent = message;
+            details.classList.add("hidden");
+            row.dataset.loaded = "error";
+        }
+
+        function renderPrediction(row, data) {
+            const summary = row.querySelector("[data-prediction-summary]");
+            const details = row.querySelector("[data-prediction-details]");
+            const selectedPrediction = data.selected_time_prediction;
+            const badges = [];
+
+            if (data.station_category) {
+                badges.push(`<span class="meta-pill">${escapeHtml(formatCategoryLabel(data.station_category))}</span>`);
+            }
+            if (data.is_interchange) {
+                badges.push('<span class="meta-pill interchange">Interchange</span>');
+            }
+            if (data.is_elevated) {
+                badges.push('<span class="meta-pill elevated">Elevated</span>');
+            }
+
+            summary.className = "prediction-strip";
+            summary.innerHTML = `
+                <div class="prediction-main">
+                    <div class="metric">
+                        <span class="metric-label">Selected Time Forecast</span>
+                        <span class="metric-value">${escapeHtml(selectedPrediction.hour)}</span>
+                        <span class="level-pill ${levelClass(selectedPrediction.crowd_level)}">${escapeHtml(selectedPrediction.crowd_level)}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Trend</span>
+                        <span class="metric-value">${escapeHtml(data.trend)}</span>
+                    </div>
+                </div>
+                <div class="timeline-block">
+                    <span class="metric-label">Upcoming Hours</span>
+                    <div class="prediction-hours">
+                    ${data.next_hours.map((point) => `
+                        <span class="hour-pill ${levelClass(point.crowd_level)}">
+                            <strong>${formatHour(point.hour)}</strong>
+                            <span class="hour-arrow" aria-hidden="true">-&gt;</span>
+                            <span class="level-pill ${levelClass(point.crowd_level)}">${escapeHtml(point.crowd_level)}</span>
+                        </span>
+                    `).join("")}
+                    </div>
+                </div>
+                <p class="recommendation">
+                    <strong>Recommendation</strong>
+                    <span>${escapeHtml(data.recommendation)}</span>
+                </p>
+            `;
+
+            details.innerHTML = `
+                <div class="detail-footer">
+                    <div class="detail-meta">
+                        <span>Line: <strong>${escapeHtml(data.line)}</strong></span>
+                        <span>Selected Hour: <strong>${escapeHtml(data.selected_hour)}</strong></span>
+                        <span>Day Type: <strong>${escapeHtml(data.day_type)}</strong></span>
+                        <span>Category: <strong>${escapeHtml(formatCategoryLabel(data.station_category))}</strong></span>
+                        <span>Trend: <strong>${escapeHtml(data.trend)}</strong></span>
+                    </div>
+                    <div class="detail-badges">
+                        ${badges.join("")}
+                        <button type="button" class="refresh-btn" data-refresh>Refresh Forecast</button>
+                    </div>
+                </div>
+            `;
+
+            row.dataset.loaded = "true";
+            details.classList.toggle("hidden", !row.classList.contains("is-expanded"));
+
+            details.querySelector("[data-refresh]").addEventListener("click", async () => {
+                await loadPrediction(row, true, true);
+            });
+        }
+
+        async function loadPrediction(row, forceRefresh = false, userInitiated = false) {
+            const stationName = row.dataset.stationName;
+            const forecastConfig = getSelectedForecastConfig();
+            const requestHour = `${String(forecastConfig.hour).padStart(2, "0")}:00`;
+            const cacheKey = buildPredictionCacheKey(stationName, requestHour, forecastConfig.dayType);
+
+            if (!forceRefresh && predictionCache.has(cacheKey)) {
+                renderPrediction(row, predictionCache.get(cacheKey));
+                return predictionCache.get(cacheKey);
+            }
+
+            renderLoading(row);
+            if (userInitiated) {
+                setPageFeedback(
+                    "loading",
+                    `Loading ${forecastConfig.dayTypeLabel.toLowerCase()} forecast for ${stationName} at ${forecastConfig.hourLabel}...`
+                );
+            }
+
+            try {
+                const response = await fetch(
+                    `/predict-crowd?station_name=${encodeURIComponent(stationName)}&hour=${encodeURIComponent(forecastConfig.hour)}&day_type=${encodeURIComponent(forecastConfig.dayType)}`,
+                    {
+                    headers: { "Accept": "application/json" }
+                    }
+                );
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || "Prediction request failed.");
+                }
+                predictionCache.set(cacheKey, data);
+                renderPrediction(row, data);
+                if (userInitiated) {
+                    setPageFeedback(
+                        "success",
+                        `Updated ${data.day_type.toLowerCase()} forecast for ${stationName} at ${data.selected_time_prediction.hour}.`
+                    );
+                }
+                return data;
+            } catch (error) {
+                renderError(row, error.message || "Could not load prediction.");
+                if (userInitiated) {
+                    setPageFeedback("error", error.message || "Could not load prediction.");
+                }
+                throw error;
+            }
+        }
+
+        searchInput.addEventListener("input", () => {
+            const visibleRows = filterRows(searchInput.value);
+            if (!searchInput.value.trim()) {
+                setPageFeedback("", "Select a station, time, and day type to check a custom crowd forecast.");
+                return;
+            }
+            setPageFeedback("", `${visibleRows.length} station${visibleRows.length === 1 ? "" : "s"} visible.`);
+        });
+
+        searchForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const query = searchInput.value.trim();
+            if (!query) {
+                setPageFeedback("error", "Enter a station name to load a custom crowd forecast.");
+                return;
+            }
+
+            const visibleRows = filterRows(query);
+            if (!visibleRows.length) {
+                setPageFeedback("error", "No station matched that search.");
+                return;
+            }
+
+            const exactRow = stationRows.find((row) => normalizeName(row.dataset.stationName || "") === normalizeName(query));
+            const targetRow = exactRow && visibleRows.includes(exactRow) ? exactRow : visibleRows[0];
+            setRowExpanded(targetRow, true);
+            targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            try {
+                await loadPrediction(targetRow, true, true);
+            } catch (error) {
+                console.error(error);
+            }
+        });
+
+        stationRows.forEach((row) => {
+            row.querySelector("[data-toggle-row]").addEventListener("click", async () => {
+                const shouldExpand = !row.classList.contains("is-expanded");
+                setRowExpanded(row, shouldExpand);
+                if (shouldExpand) {
+                    try {
+                        await loadPrediction(row, false, false);
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+            });
+        });
+
+        window.addEventListener("load", async () => {
+            populateHourOptions();
+            filterRows("");
+            setPageFeedback("", "Select a station, time, and weekday or weekend to check a realistic crowd forecast.");
+        });
+    </script>
+</body>
+</html>

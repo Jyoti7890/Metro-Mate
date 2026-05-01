@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Mate - Passenger Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <style>
+        .dashboard-hero {
+            background: linear-gradient(135deg, #0f1a27 0%, #16344c 58%, #1f5f8b 100%);
+            color: #f8fafc;
+            padding: 3.5rem 0 2.75rem;
+            margin-bottom: 2rem;
+        }
+        .dashboard-hero-shell {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .dashboard-layout,
+        .split-grid,
+        .chart-grid,
+        .summary-grid,
+        .insight-grid {
+            display: grid;
+            gap: 1rem;
+        }
+        .dashboard-layout {
+            margin-bottom: 3rem;
+        }
+        .split-grid {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+        .chart-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        .summary-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+        .insight-grid {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        .panel-card,
+        .info-card,
+        .insight-card {
+            background: var(--card);
+            color: var(--card-foreground);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-card);
+        }
+        .panel-card {
+            padding: 1.25rem;
+        }
+        .info-card,
+        .insight-card {
+            padding: 1rem;
+        }
+        .profile-list {
+            display: grid;
+            gap: 0.85rem;
+        }
+        .profile-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.75rem;
+        }
+        .profile-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .profile-label,
+        .muted-copy {
+            color: var(--muted-foreground);
+            font-size: 0.9rem;
+        }
+        .metric-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin-top: 0.35rem;
+        }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .table-shell {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 0.9rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th,
+        td {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.92rem;
+        }
+        th {
+            background: var(--secondary);
+            color: var(--muted-foreground);
+            font-weight: 600;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.28rem 0.7rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--secondary);
+        }
+        .status-upcoming,
+        .status-matched {
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+        .status-completed,
+        .status-resolved,
+        .status-credit,
+        .status-active {
+            color: var(--success);
+            border-color: var(--success);
+        }
+        .status-pending,
+        .status-searching {
+            color: var(--info);
+            border-color: var(--info);
+        }
+        .status-cancelled,
+        .status-debit,
+        .status-blocked {
+            color: var(--destructive);
+            border-color: var(--destructive);
+        }
+        .empty-state,
+        .error-panel {
+            border: 1px dashed var(--border);
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            color: var(--muted-foreground);
+        }
+        .error-panel.hidden {
+            display: none;
+        }
+        .chart-card canvas {
+            width: 100%;
+            height: 280px !important;
+        }
+        .insight-list {
+            display: grid;
+            gap: 0.85rem;
+        }
+        @media (max-width: 768px) {
+            .dashboard-hero {
+                padding-top: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <header class="dashboard-hero">
+        <div class="container dashboard-hero-shell">
+            <div>
+                <div class="text-sm opacity-70">Passenger Workspace</div>
+                <h1 class="text-3xl font-bold">Your Metro Dashboard</h1>
+                <p class="opacity-90">Only your account activity, bookings, complaints, spending, and route patterns are shown here.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="panel-card" style="padding: 0.8rem 1rem; min-width: 180px;">
+                    <div class="muted-copy">Last refreshed</div>
+                    <div id="last-updated" class="font-semibold">Loading...</div>
+                </div>
+                <button id="refresh-dashboard" class="btn btn-accent">Refresh</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container dashboard-layout">
+        <div id="dashboard-error" class="error-panel hidden"></div>
+
+        <section class="split-grid">
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-2xl font-bold">Profile</h2>
+                        <p class="muted-copy">Identity and session context for the logged-in passenger.</p>
+                    </div>
+                </div>
+                <div id="profile-summary" class="profile-list"></div>
+            </article>
+
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-2xl font-bold">Overview</h2>
+                        <p class="muted-copy">Personal totals derived only from your records.</p>
+                    </div>
+                </div>
+                <div id="overview-grid" class="summary-grid"></div>
+            </article>
+        </section>
+
+        <section class="split-grid" style="margin-top: 1rem;">
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-xl font-bold">Ticket Booking History</h2>
+                        <p class="muted-copy">From station, to station, travel date, fare, and journey status.</p>
+                    </div>
+                </div>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Date</th>
+                                <th>Fare</th>
+                                <th>Tickets</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticket-history-body"></tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-xl font-bold">Lost & Found Tracker</h2>
+                        <p class="muted-copy">Only complaints submitted by your account.</p>
+                    </div>
+                </div>
+                <div id="complaint-summary-grid" class="summary-grid" style="margin-bottom: 1rem;"></div>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Complaint ID</th>
+                                <th>Item</th>
+                                <th>Station</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Matches</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complaints-body"></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel-card" style="margin-top: 1rem;">
+            <div class="section-head">
+                <div>
+                    <h2 class="text-2xl font-bold">Personal Analytics</h2>
+                    <p class="muted-copy">Chart.js is used here for user-scoped trends and station usage.</p>
+                </div>
+            </div>
+            <div class="chart-grid">
+                <div class="info-card chart-card">
+                    <h3 class="font-bold">Monthly Ticket Trend</h3>
+                    <p class="muted-copy">Total tickets booked each month</p>
+                    <canvas id="monthly-bookings-chart"></canvas>
+                </div>
+                <div class="info-card chart-card">
+                    <h3 class="font-bold">Monthly Spend</h3>
+                    <p class="muted-copy">Ticket spending by month</p>
+                    <canvas id="monthly-spend-chart"></canvas>
+                </div>
+                <div class="info-card chart-card">
+                    <h3 class="font-bold">Most Used Stations</h3>
+                    <p class="muted-copy">Stations you travel through most</p>
+                    <canvas id="stations-chart"></canvas>
+                </div>
+                <div class="info-card chart-card">
+                    <h3 class="font-bold">Peak Travel Times</h3>
+                    <p class="muted-copy">Your busiest booking hours</p>
+                    <canvas id="peak-hours-chart"></canvas>
+                </div>
+                <div class="info-card chart-card">
+                    <h3 class="font-bold">Complaint Status</h3>
+                    <p class="muted-copy">Pending, matched, and resolved split</p>
+                    <canvas id="complaint-status-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="split-grid" style="margin-top: 1rem;">
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-xl font-bold">Smart Insights</h2>
+                        <p class="muted-copy">Route suggestions and behavior-based travel notes.</p>
+                    </div>
+                </div>
+                <div id="insight-note" class="info-card" style="margin-bottom: 1rem;"></div>
+                <div id="routes-list" class="insight-list"></div>
+            </article>
+
+            <article class="panel-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="text-xl font-bold">Smart Card Snapshot</h2>
+                        <p class="muted-copy">Masked card details and recent account activity.</p>
+                    </div>
+                </div>
+                <div id="smart-card-summary" class="summary-grid" style="margin-bottom: 1rem;"></div>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Route</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body"></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/user_dashboard_role_based.js') }}"></script>
+</body>
+</html>
