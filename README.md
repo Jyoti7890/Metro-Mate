@@ -1,44 +1,38 @@
 # 🚆 Metro Mate
 ### Your trusted companion for smarter metro travel, ticketing, and passenger support
 
-Metro Mate is a full-stack metro service web application designed to make metro travel easier and more organized. It brings common passenger needs into one place, such as ticket booking, station search, smart card support, nearby place discovery, travel tracking, and lost & found reporting.
+Metro Mate is a full-stack metro service web application designed to make metro travel easier and more organized. It brings common passenger needs into one place, such as ticket booking, station search, smart card support, travel tracking, and lost & found reporting.
 
 The goal of this project was not just to build features, but to create a system that feels useful, practical, and close to a real-world public transport product.
-
-**Live Deployment:** [Open Metro Mate](https://your-live-link-here.onrender.com)  
-**Demo Video:** [Watch Demo](https://your-demo-video-link-here.com)
 
 ## 📸 Screenshots
 
 ### Home Page
-![Home Page](https://via.placeholder.com/1280x720?text=Home+Page)
+![Home Page](<screenshots/Home Page.png>)
 
 ### Login / Signup
-![Login Page](https://via.placeholder.com/1280x720?text=Login+%2F+Signup+Page)
+![Login Page](<screenshots/Login Page.png>)
 
 ### Stations Page
-![Stations Page](https://via.placeholder.com/1280x720?text=Stations+Page)
+![Stations Page](<screenshots/Station Page.png>)
 
 ### Book Ticket Page
-![Book Ticket Page](https://via.placeholder.com/1280x720?text=Book+Ticket+Page)
+![Book Ticket Page](<screenshots/Book Ticket.png>)
 
 ### User Dashboard
-![User Dashboard](https://via.placeholder.com/1280x720?text=User+Dashboard)
+![User Dashboard](<screenshots/User Dashboard.png>)
 
 ### My Bookings Page
-![My Bookings Page](https://via.placeholder.com/1280x720?text=My+Bookings+Page)
+![My Bookings Page](<screenshots/My Bookings Page.png>)
 
 ### Smart Card Page
-![Smart Card Page](https://via.placeholder.com/1280x720?text=Smart+Card+Page)
-
-### Nearby Places Page
-![Nearby Places Page](https://via.placeholder.com/1280x720?text=Nearby+Places+Page)
+![Smart Card Page](<screenshots/Smart Card Page.png>)
 
 ### Lost & Found Page
-![Lost and Found Page](https://via.placeholder.com/1280x720?text=Lost+%26+Found+Page)
+![Lost and Found Page](<screenshots/Lost and Found Page.png>)
 
 ### Admin Dashboard
-![Admin Dashboard](https://via.placeholder.com/1280x720?text=Admin+Dashboard)
+![Admin Dashboard](<screenshots/Admin Dashboard.png>)
 
 ## ✨ Features
 
@@ -173,11 +167,9 @@ Metro Mate is a project built with the mindset of solving a real travel problem 
 
 ## 👤 Project Profile
 
-**Name:** Your Full Name  
-**GitHub:** [github.com/your-github-username](https://github.com/your-github-username)  
-**LinkedIn:** [linkedin.com/in/your-linkedin-username](https://linkedin.com/in/your-linkedin-username)
-
-If you are using this project in your portfolio, replace the placeholders above with your actual profile details.
+**Name:** Jyoti Gola
+🔗 LinkedIn: [https://www.linkedin.com/in/jyoti-gola-67251026a/](https://www.linkedin.com/in/jyoti-gola-67251026a/)\
+🔗 GitHub: [https://github.com/Jyoti7890](https://github.com/Jyoti7890)
 
 ## 📄 License
 
